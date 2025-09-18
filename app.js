@@ -2,7 +2,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyBO4MrF8lyQn8Z291h2i6xvsG991TPzP08",
   authDomain: "pdc-dashboard-8963a.firebaseapp.com",
-  databaseURL: "https://pdc-dashboard-8963a-default-rtdb.firebaseio.com",
+  databaseURL: "databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "pdc-dashboard-8963a",
   storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
   messagingSenderId: "340274488388",
