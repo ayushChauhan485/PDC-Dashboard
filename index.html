@@ -7,197 +7,184 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="container">
-                <div class="header__content">
-                    <div class="header__left">
-                        <h1 class="header__title">PDC Project Dashboard</h1>
-                        <div class="connection-status">
-                            <span id="connectionStatus" class="status status--info">Initializing...</span>
-                        </div>
-                    </div>
-                    <div class="header__actions">
-                        <button class="btn btn--primary" id="addProjectBtn" type="button">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Project
-                        </button>
-                        <button class="btn btn--outline" id="exportBtn" type="button">Export</button>
-                    </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="logo">PDC Dashboard</h1>
+                    <p class="subtitle">Projection & Design Club Project Tracker</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn--primary" id="addProjectBtn">
+                        <span>+ Add Project</span>
+                    </button>
+                    <button class="btn btn--outline" id="exportBtn">Export</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                    <button class="btn btn--outline" id="importBtn">Import</button>
                 </div>
             </div>
-        </header>
-
-        <!-- Filters and Search -->
-        <section class="filters">
-            <div class="container">
-                <div class="filters__content">
-                    <div class="search-box">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Search projects..." autocomplete="off">
-                    </div>
-                    <div class="filter-controls">
-                        <select id="statusFilter" class="form-control">
-                            <option value="">All Status</option>
-                            <option value="Planning">Planning</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Review">Review</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                        <select id="mentorFilter" class="form-control">
-                            <option value="">All Mentors</option>
-                        </select>
-                    </div>
+            
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-bar">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search projects..." class="form-control">
+                </div>
+                <div class="filter-container">
+                    <select id="statusFilter" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                    </select>
                 </div>
             </div>
-        </section>
+        </div>
+    </header>
 
-        <!-- Dashboard Stats -->
-        <section class="stats">
-            <div class="container">
-                <div class="stats__grid">
-                    <div class="stat-card">
-                        <div class="stat-card__value" id="totalProjects">0</div>
-                        <div class="stat-card__label">Total Projects</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card__value" id="activeProjects">0</div>
-                        <div class="stat-card__label">Active</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card__value" id="completedProjects">0</div>
-                        <div class="stat-card__label">Completed</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card__value" id="overdue">0</div>
-                        <div class="stat-card__label">Overdue</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Projects List -->
-        <main class="main">
-            <div class="container">
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view">
                 <div class="projects-grid" id="projectsGrid">
-                    <!-- Projects will be loaded here -->
+                    <!-- Projects will be rendered here -->
                 </div>
-                <div class="loading" id="loadingSpinner">
-                    <div class="loading__spinner"></div>
-                    <p>Loading projects...</p>
-                </div>
-                <div class="empty-state" id="emptyState" style="display: none;">
-                    <h3>No projects found</h3>
-                    <p>Create your first project to get started.</p>
-                    <button class="btn btn--primary" id="emptyStateBtn" type="button">Add Project</button>
+                <div id="emptyState" class="empty-state hidden">
+                    <div class="empty-state-content">
+                        <h3>No Projects Yet</h3>
+                        <p>Start by adding your first project to track progress and collaborate with your team.</p>
+                        <button class="btn btn--primary" onclick="document.getElementById('addProjectBtn').click()">
+                            Add Your First Project
+                        </button>
+                    </div>
                 </div>
             </div>
-        </main>
-    </div>
+
+            <!-- Project Detail View -->
+            <div id="detailView" class="view hidden">
+                <div class="detail-header">
+                    <button class="btn btn--outline btn--sm" id="backToDashboard">← Back to Dashboard</button>
+                    <div class="detail-actions">
+                        <button class="btn btn--outline btn--sm" id="editProjectBtn">Edit</button>
+                        <button class="btn btn--outline btn--sm status--error" id="deleteProjectBtn">Delete</button>
+                    </div>
+                </div>
+                <div class="detail-content" id="detailContent">
+                    <!-- Detail content will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </main>
 
     <!-- Add/Edit Project Modal -->
     <div id="projectModal" class="modal hidden">
-        <div class="modal__overlay">
-            <div class="modal__content">
-                <div class="modal__header">
-                    <h3 id="modalTitle">Add New Project</h3>
-                    <button class="modal__close" id="closeModal" type="button">&times;</button>
-                </div>
-                <div class="modal__body">
-                    <form id="projectForm">
-                        <div class="form-group">
-                            <label class="form-label" for="projectTitle">Project Title *</label>
-                            <input type="text" id="projectTitle" class="form-control" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label" for="projectDescription">Description</label>
-                            <textarea id="projectDescription" class="form-control" rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="projectMentor">Mentor *</label>
-                            <input type="text" id="projectMentor" class="form-control" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="projectAssignees">Assignees (comma-separated)</label>
-                            <input type="text" id="projectAssignees" class="form-control" placeholder="John Doe, Jane Smith">
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="projectStatus">Status *</label>
-                                <select id="projectStatus" class="form-control" required>
-                                    <option value="Planning">Planning</option>
-                                    <option value="In Progress">In Progress</option>
-                                    <option value="Review">Review</option>
-                                    <option value="Completed">Completed</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="projectProgress">Progress (%)</label>
-                                <input type="number" id="projectProgress" class="form-control" min="0" max="100" value="0">
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" for="startDate">Start Date</label>
-                                <input type="date" id="startDate" class="form-control">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="dueDate">Due Date</label>
-                                <input type="date" id="dueDate" class="form-control">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="projectResources">Resources (URLs, comma-separated)</label>
-                            <textarea id="projectResources" class="form-control" rows="2" placeholder="https://example.com, https://docs.google.com/..."></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal__footer">
-                    <button type="button" class="btn btn--outline" id="cancelBtn">Cancel</button>
-                    <button type="submit" class="btn btn--primary" id="saveBtn" form="projectForm">Save Project</button>
-                </div>
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Project</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Project Details Modal -->
-    <div id="detailsModal" class="modal hidden">
-        <div class="modal__overlay">
-            <div class="modal__content modal__content--large">
-                <div class="modal__header">
-                    <h3 id="detailsTitle">Project Details</h3>
-                    <button class="modal__close" id="closeDetailsModal" type="button">&times;</button>
-                </div>
-                <div class="modal__body">
-                    <div id="projectDetails">
-                        <!-- Project details will be loaded here -->
+            <div class="modal-body">
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label class="form-label" for="title">Project Title *</label>
+                        <input type="text" id="title" name="title" class="form-control" required>
                     </div>
-                </div>
-                <div class="modal__footer">
-                    <button type="button" class="btn btn--outline" id="editProjectBtn">Edit</button>
-                    <button type="button" class="btn btn--outline" id="deleteProjectBtn">Delete</button>
-                    <button type="button" class="btn btn--primary" id="closeDetailsBtn">Close</button>
-                </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="mentor">Mentor (4th Year) *</label>
+                            <input type="text" id="mentor" name="mentor" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="status">Status</label>
+                            <select id="status" name="status" class="form-control">
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="startDate">Start Date</label>
+                            <input type="date" id="startDate" name="startDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="dueDate">Due Date</label>
+                            <input type="date" id="dueDate" name="dueDate" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="progress">Progress (%)</label>
+                        <input type="range" id="progress" name="progress" min="0" max="100" value="0" class="progress-slider">
+                        <div class="progress-display">
+                            <span id="progressValue">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Assignees (Juniors)</label>
+                        <div id="assigneesList" class="dynamic-list">
+                            <input type="text" class="form-control assignee-input" placeholder="Enter assignee name">
+                        </div>
+                        <button type="button" class="btn btn--outline btn--sm" id="addAssignee">+ Add Assignee</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Resources</label>
+                        <div id="resourcesList" class="dynamic-list">
+                            <div class="resource-row">
+                                <input type="text" class="form-control resource-name" placeholder="Resource name">
+                                <input type="url" class="form-control resource-url" placeholder="Resource URL">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn--outline btn--sm" id="addResource">+ Add Resource</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="cancelBtn">Cancel</button>
+                <button type="submit" form="projectForm" class="btn btn--primary" id="saveBtn">Save Project</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    
-    <!-- Application Script -->
-    <script src="app.js"></script>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-content--sm">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this project? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--outline" id="cancelDeleteBtn">Cancel</button>
+                <button type="button" class="btn status--error" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-note">
+                <strong>Note:</strong> Data resets on page reload (sandbox limitation). 
+                For persistence, consider integrating Firebase Realtime Database or Google Sheets API.
+            </p>
+        </div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
 </body>
 </html>
