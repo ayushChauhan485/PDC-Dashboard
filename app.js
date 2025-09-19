@@ -284,61 +284,61 @@ class UIController {
     console.log('Initializing UI Controller');
     this.initializeEventListeners();
     this.initializeDataListener();
+    
+  // //   // Initialize demo data after a short delay
+  //   setTimeout(() => {
+  //     projectStore.initializeWithDemoData().catch(console.error);
+  //   }, 1000);
   }
 
   initializeEventListeners() {
     console.log('Setting up event listeners');
     
-    // Define a helper for closing the details modal and resetting state
-    const closeDetailsActions = () => {
-      this.closeDetailsModal();
-      this.currentProject = null;
-    };
-  
     // Modal controls
     const addProjectBtn = document.getElementById('addProjectBtn');
     const emptyStateBtn = document.getElementById('emptyStateBtn');
     const closeModal = document.getElementById('closeModal');
-    const closeDetailsModalBtn = document.getElementById('closeDetailsModal');
+    const closeDetailsModal = document.getElementById('closeDetailsModal');
     const cancelBtn = document.getElementById('cancelBtn');
     const closeDetailsBtn = document.getElementById('closeDetailsBtn');
-  
+
     if (addProjectBtn) {
       addProjectBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        console.log('Add project button clicked');
         this.openAddProjectModal();
       });
     }
-  
+
     if (emptyStateBtn) {
       emptyStateBtn.addEventListener('click', (e) => {
         e.preventDefault();
         this.openAddProjectModal();
       });
     }
-  
+
     if (closeModal) {
       closeModal.addEventListener('click', () => this.closeModal());
     }
-  
-    if (closeDetailsModalBtn) {
-      closeDetailsModalBtn.addEventListener('click', closeDetailsActions);
+
+    if (closeDetailsModal) {
+      closeDetailsModal.addEventListener('click', () => this.closeDetailsModal());
     }
-  
+
     if (cancelBtn) {
       cancelBtn.addEventListener('click', () => this.closeModal());
     }
-  
+
     if (closeDetailsBtn) {
-      closeDetailsBtn.addEventListener('click', closeDetailsActions);
+      closeDetailsBtn.addEventListener('click', () => this.closeDetailsModal());
     }
-  
+
     // Form submission
     const projectForm = document.getElementById('projectForm');
     if (projectForm) {
       projectForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
     }
-  
+
     // Project actions
     const editProjectBtn = document.getElementById('editProjectBtn');
     const deleteProjectBtn = document.getElementById('deleteProjectBtn');
@@ -346,50 +346,50 @@ class UIController {
     if (editProjectBtn) {
       editProjectBtn.addEventListener('click', () => this.editCurrentProject());
     }
-  
+
     if (deleteProjectBtn) {
       deleteProjectBtn.addEventListener('click', () => this.deleteCurrentProject());
     }
-  
+
     // Export functionality
     const exportBtn = document.getElementById('exportBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => this.exportProjects());
     }
-  
+
     // Search and filters
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const mentorFilter = document.getElementById('mentorFilter');
-  
+
     if (searchInput) {
       searchInput.addEventListener('input', (e) => this.handleSearch(e));
     }
-  
+
     if (statusFilter) {
       statusFilter.addEventListener('change', (e) => this.handleStatusFilter(e));
     }
-  
+
     if (mentorFilter) {
       mentorFilter.addEventListener('change', (e) => this.handleMentorFilter(e));
     }
-  
+
     // Modal overlay clicks
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('modal__overlay')) {
         this.closeModal();
-        closeDetailsActions();
+        this.closeDetailsModal();
       }
     });
-  
+
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.closeModal();
-        closeDetailsActions();
+        this.closeDetailsModal();
       }
     });
-  
+
     console.log('Event listeners set up complete');
   }
 
@@ -416,6 +416,7 @@ class UIController {
     const projects = this.getFilteredProjects();
     console.log('Rendering projects:', projects.length);
 
+    // Hide loading spinner
     loadingSpinner.style.display = 'none';
 
     if (projects.length === 0) {
@@ -428,6 +429,7 @@ class UIController {
     projectsGrid.style.display = 'grid';
     projectsGrid.innerHTML = projects.map(project => this.createProjectCard(project)).join('');
 
+    // Add click listeners to project cards
     projectsGrid.querySelectorAll('.project-card').forEach(card => {
       card.addEventListener('click', () => {
         const projectId = card.dataset.projectId;
@@ -449,7 +451,7 @@ class UIController {
         <div class="project-card__header">
           <h3 class="project-card__title">${project.title}</h3>
           <div class="project-card__meta">
-            <span class="project-card__mentor">🧑‍🏫 ${project.mentor}</span>
+            <span class="project-card__mentor">👨‍🏫 ${project.mentor}</span>
             <span class="status ${statusClass}">${project.status}</span>
           </div>
         </div>
@@ -547,6 +549,7 @@ class UIController {
     
     const currentMentorValue = mentorFilter.value;
 
+    // Update mentor filter options
     const mentors = [...new Set(projects.map(p => p.mentor))].sort();
     mentorFilter.innerHTML = '<option value="">All Mentors</option>' + 
       mentors.map(mentor => `<option value="${mentor}">${mentor}</option>`).join('');
@@ -555,6 +558,7 @@ class UIController {
   }
 
   openAddProjectModal() {
+    console.log('Opening add project modal');
     this.isEditMode = false;
     this.currentProject = null;
     
@@ -710,6 +714,7 @@ class UIController {
 
   async handleFormSubmit(e) {
     e.preventDefault();
+    console.log('Form submitted');
     
     const projectData = {
       title: this.getFormValue('projectTitle'),
@@ -727,9 +732,10 @@ class UIController {
         .split(',')
         .map(r => r.trim())
         .filter(r => r),
-      comments: this.currentProject?.comments || []
+      comments: []
     };
 
+    // Validation
     if (!projectData.title || !projectData.mentor) {
       alert('Please fill in required fields (Title and Mentor)');
       return;
@@ -738,14 +744,13 @@ class UIController {
     try {
       if (this.isEditMode && this.currentProject) {
         await projectStore.updateProject(this.currentProject.id, projectData);
+        console.log('Project updated');
       } else {
         await projectStore.addProject(projectData);
+        console.log('Project added');
       }
       
       this.closeModal();
-      this.currentProject = null;
-      this.isEditMode = false;
-
     } catch (error) {
       console.error('Save error:', error);
       alert('Failed to save project. Please try again.');
@@ -794,6 +799,7 @@ class UIController {
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
+      this.currentProject = null;
     }
   }
 
