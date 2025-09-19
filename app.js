@@ -19,7 +19,7 @@ function initializeFirebase() {
       console.error('Firebase not loaded');
       return false;
     }
-
+    
     firebase.initializeApp(firebaseConfig);
     database = firebase.database();
     isFirebaseInitialized = true;
@@ -37,7 +37,7 @@ class FirebaseProjectStore {
     this.projects = new Map();
     this.listeners = new Set();
     this.isConnected = false;
-
+    
     if (initializeFirebase()) {
       this.projectsRef = database.ref('projects');
       this.setupConnectionListener();
@@ -52,7 +52,7 @@ class FirebaseProjectStore {
 
   setupConnectionListener() {
     if (!isFirebaseInitialized) return;
-
+    
     const connectedRef = database.ref('.info/connected');
     connectedRef.on('value', (snapshot) => {
       this.isConnected = snapshot.val();
@@ -64,7 +64,7 @@ class FirebaseProjectStore {
   updateConnectionStatus() {
     const statusElement = document.getElementById('connectionStatus');
     if (!statusElement) return;
-
+    
     if (this.useLocalStorage) {
       statusElement.className = 'status status--warning';
       statusElement.textContent = 'Local Storage';
@@ -79,17 +79,17 @@ class FirebaseProjectStore {
 
   setupDataListener() {
     if (!isFirebaseInitialized || !this.projectsRef) return;
-
+    
     this.projectsRef.on('value', (snapshot) => {
       const data = snapshot.val();
       this.projects.clear();
-
+      
       if (data) {
         Object.entries(data).forEach(([id, project]) => {
           this.projects.set(id, { ...project, id });
         });
       }
-
+      
       this.notifyListeners();
     }, (error) => {
       console.error('Firebase read error:', error);
@@ -115,7 +115,7 @@ class FirebaseProjectStore {
 
   saveToLocalStorage() {
     if (!this.useLocalStorage) return;
-
+    
     try {
       const projects = Array.from(this.projects.values());
       localStorage.setItem('pdc-projects', JSON.stringify(projects));
@@ -218,50 +218,10 @@ class FirebaseProjectStore {
   getProject(id) {
     return this.projects.get(id);
   }
+}
 
-  //   // Initialize with demo data if database is empty
-  //   async initializeWithDemoData() {
-  //     if (this.projects.size > 0) return;
-
-  //     const demoProjects = [
-  //       {
-  //         title: "AI Chatbot Development",
-  //         description: "Develop an intelligent chatbot using natural language processing for customer support automation.",
-  //         mentor: "Dr. Sarah Chen",
-  //         assignees: ["Alex Kumar", "Maria Rodriguez"],
-  //         status: "In Progress",
-  //         startDate: "2024-01-15",
-  //         dueDate: "2024-03-30",
-  //         progress: 65,
-  //         resources: ["https://github.com/example/chatbot", "https://docs.openai.com/"],
-  //         comments: ["Initial prototype completed", "Working on NLP improvements"]
-  //       },
-  //       {
-  //         title: "Mobile App UI/UX Redesign",
-  //         description: "Complete redesign of the mobile application interface with focus on user experience and accessibility.",
-  //         mentor: "Prof. James Wilson",
-  //         assignees: ["Emily Zhang", "David Thompson", "Lisa Park"],
-  //         status: "Planning",
-  //         startDate: "2024-02-01",
-  //         dueDate: "2024-04-15",
-  //         progress: 25,
-  //         resources: ["https://figma.com/design-system", "https://material.io/design"],
-  //         comments: ["User research phase completed", "Moving to wireframe stage"]
-  //       }
-  //     ];
-
-  //     try {
-  //       for (const project of demoProjects) {
-  //         await this.addProject(project);
-  //       }
-  //     } catch (error) {
-  //       console.error('Demo data initialization error:', error);
-  //     }
-  //   }
-  // }
-
-  // Initialize store
-  const projectStore = new FirebaseProjectStore();
+// Initialize store
+const projectStore = new FirebaseProjectStore();
 
 // UI State Management
 class UIController {
@@ -284,11 +244,6 @@ class UIController {
     console.log('Initializing UI Controller');
     this.initializeEventListeners();
     this.initializeDataListener();
-
-    // //   // Initialize demo data after a short delay
-    //   setTimeout(() => {
-    //     projectStore.initializeWithDemoData().catch(console.error);
-    //   }, 1000);
   }
 
   initializeEventListeners() {
@@ -374,6 +329,17 @@ class UIController {
       mentorFilter.addEventListener('change', (e) => this.handleMentorFilter(e));
     }
 
+    // Progress slider
+    const progressSlider = document.getElementById('projectProgress');
+    if (progressSlider) {
+      progressSlider.addEventListener('input', (e) => {
+        const progressValue = document.getElementById('progressValue');
+        if (progressValue) {
+          progressValue.textContent = e.target.value + '%';
+        }
+      });
+    }
+
     // Modal overlay clicks
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('modal__overlay')) {
@@ -440,49 +406,41 @@ class UIController {
 
   createProjectCard(project) {
     const isOverdue = project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'Completed';
-    const assigneesList = project.assignees?.map(assignee =>
-      `<span class="assignee-tag">${assignee}</span>`
-    ).join('') || '';
-
+    const assigneesList = project.assignees?.join(', ') || 'None';
     const statusClass = this.getStatusClass(project.status);
 
     return `
       <div class="project-card" data-project-id="${project.id}">
         <div class="project-card__header">
           <h3 class="project-card__title">${project.title}</h3>
-          <div class="project-card__meta">
-            <span class="project-card__mentor">👨‍🏫 ${project.mentor}</span>
-            <span class="status ${statusClass}">${project.status}</span>
-          </div>
+          <span class="badge badge--${statusClass}">${project.status}</span>
         </div>
         
-        <div class="project-card__body">
-          ${project.description ? `<p class="project-card__description">${project.description}</p>` : ''}
+        ${project.description ? `<p class="project-card__description">${project.description}</p>` : ''}
+        
+        <div class="project-card__meta">
+          <div class="project-card__mentor">
+            <strong>Mentor:</strong> ${project.mentor}
+          </div>
           
           ${project.assignees?.length ? `
             <div class="project-card__assignees">
-              <div class="project-card__assignees-title">Assignees</div>
-              <div class="assignee-list">${assigneesList}</div>
+              <strong>Assignees:</strong> ${assigneesList}
             </div>
           ` : ''}
           
           <div class="project-card__progress">
-            <div class="progress-label">
-              <span>Progress</span>
-              <span>${project.progress || 0}%</span>
-            </div>
             <div class="progress-bar">
-              <div class="progress-fill" style="width: ${project.progress || 0}%"></div>
+              <div class="progress-bar__fill" style="width: ${project.progress || 0}%"></div>
             </div>
+            <span class="progress-text">${project.progress || 0}%</span>
           </div>
-        </div>
-        
-        <div class="project-card__footer">
-          <div class="project-card__dates">
-            ${project.startDate ? `Started: ${new Date(project.startDate).toLocaleDateString()}` : ''}
-            ${project.dueDate ? `<br>Due: ${new Date(project.dueDate).toLocaleDateString()}` : ''}
-            ${isOverdue ? '<br><span class="status status--error">Overdue</span>' : ''}
-          </div>
+          
+          ${project.dueDate ? `
+            <div class="project-card__due-date ${isOverdue ? 'overdue' : ''}">
+              <strong>Due:</strong> ${new Date(project.dueDate).toLocaleDateString()}
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -490,23 +448,23 @@ class UIController {
 
   getStatusClass(status) {
     const statusMap = {
-      'Planning': 'status--info',
-      'In Progress': 'status--warning',
-      'Review': 'status--info',
-      'Completed': 'status--success'
+      'Planning': 'planning',
+      'In Progress': 'in-progress',
+      'Review': 'review',
+      'Completed': 'completed'
     };
-    return statusMap[status] || 'status--info';
+    return statusMap[status] || 'planning';
   }
 
   getFilteredProjects() {
     let projects = projectStore.getProjects();
 
     if (this.searchTerm) {
-      const term = this.searchTerm.toLowerCase();
       projects = projects.filter(project =>
-        project.title.toLowerCase().includes(term) ||
-        (project.description && project.description.toLowerCase().includes(term)) ||
-        project.mentor.toLowerCase().includes(term)
+        project.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        project.description?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        project.mentor.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        project.assignees?.some(assignee => assignee.toLowerCase().includes(this.searchTerm.toLowerCase()))
       );
     }
 
@@ -518,324 +476,350 @@ class UIController {
       projects = projects.filter(project => project.mentor === this.mentorFilter);
     }
 
-    return projects.sort((a, b) => (b.lastUpdated || b.createdAt || 0) - (a.lastUpdated || a.createdAt || 0));
+    return projects;
   }
 
   updateStats() {
-    const projects = projectStore.getProjects();
-    const totalProjects = projects.length;
+    const projects = this.getFilteredProjects();
     const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
     const completedProjects = projects.filter(p => p.status === 'Completed').length;
-    const overdue = projects.filter(p =>
+    const overdueProjects = projects.filter(p => 
       p.dueDate && new Date(p.dueDate) < new Date() && p.status !== 'Completed'
     ).length;
 
-    const totalEl = document.getElementById('totalProjects');
-    const activeEl = document.getElementById('activeProjects');
-    const completedEl = document.getElementById('completedProjects');
-    const overdueEl = document.getElementById('overdue');
-
-    if (totalEl) totalEl.textContent = totalProjects;
-    if (activeEl) activeEl.textContent = activeProjects;
-    if (completedEl) completedEl.textContent = completedProjects;
-    if (overdueEl) overdueEl.textContent = overdue;
+    document.getElementById('totalProjects').textContent = projects.length;
+    document.getElementById('activeProjects').textContent = activeProjects;
+    document.getElementById('completedProjects').textContent = completedProjects;
+    document.getElementById('overdueProjects').textContent = overdueProjects;
   }
 
   updateFilters() {
     const projects = projectStore.getProjects();
     const mentorFilter = document.getElementById('mentorFilter');
-
-    if (!mentorFilter) return;
-
-    const currentMentorValue = mentorFilter.value;
-
-    // Update mentor filter options
-    const mentors = [...new Set(projects.map(p => p.mentor))].sort();
-    mentorFilter.innerHTML = '<option value="">All Mentors</option>' +
-      mentors.map(mentor => `<option value="${mentor}">${mentor}</option>`).join('');
-
-    mentorFilter.value = currentMentorValue;
+    
+    if (mentorFilter) {
+      const mentors = [...new Set(projects.map(p => p.mentor))].sort();
+      const currentValue = mentorFilter.value;
+      
+      mentorFilter.innerHTML = '<option value="">All Mentors</option>' +
+        mentors.map(mentor => `<option value="${mentor}">${mentor}</option>`).join('');
+      
+      mentorFilter.value = currentValue;
+    }
   }
 
   openAddProjectModal() {
     console.log('Opening add project modal');
     this.isEditMode = false;
     this.currentProject = null;
-
+    
+    // Reset form
+    const form = document.getElementById('projectForm');
+    if (form) {
+      form.reset();
+    }
+    
+    // Update modal title
     const modalTitle = document.getElementById('modalTitle');
-    const saveBtn = document.getElementById('saveBtn');
-
-    if (modalTitle) modalTitle.textContent = 'Add New Project';
-    if (saveBtn) saveBtn.textContent = 'Save Project';
-
-    this.resetForm();
-    this.showModal('projectModal');
+    if (modalTitle) {
+      modalTitle.textContent = 'Add New Project';
+    }
+    
+    // Reset progress display
+    const progressValue = document.getElementById('progressValue');
+    if (progressValue) {
+      progressValue.textContent = '0%';
+    }
+    
+    // Show modal
+    const modal = document.getElementById('projectModal');
+    if (modal) {
+      modal.classList.add('show');
+    }
   }
 
   openProjectDetails(projectId) {
+    console.log('Opening project details for:', projectId);
+    
     const project = projectStore.getProject(projectId);
-    if (!project) return;
+    if (!project) {
+      console.error('Project not found:', projectId);
+      return;
+    }
 
     this.currentProject = project;
-    this.renderProjectDetails(project);
-    this.showModal('detailsModal');
+
+    // Update modal title
+    const detailsTitle = document.getElementById('detailsTitle');
+    if (detailsTitle) {
+      detailsTitle.textContent = project.title;
+    }
+
+    // Create and set details content
+    const detailsContent = document.getElementById('projectDetailsContent');
+    if (detailsContent) {
+      detailsContent.innerHTML = this.createProjectDetailsHTML(project);
+    }
+
+    // Show modal
+    const modal = document.getElementById('projectDetailsModal');
+    if (modal) {
+      modal.classList.add('show');
+    }
   }
 
-  renderProjectDetails(project) {
-    const detailsContainer = document.getElementById('projectDetails');
-    if (!detailsContainer) return;
-
-    const resources = project.resources?.map(url =>
-      `<a href="${url}" target="_blank" class="resource-link">${url}</a>`
-    ).join('') || 'No resources added';
-
-    const assignees = project.assignees?.join(', ') || 'No assignees';
-    const comments = project.comments?.map(comment =>
-      `<div class="comment">${comment}</div>`
-    ).join('') || '<div class="comment">No comments yet</div>';
-
-    detailsContainer.innerHTML = `
-      <div class="project-detail">
-        <div class="project-detail__label">Title</div>
-        <div class="project-detail__value">${project.title}</div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Description</div>
-        <div class="project-detail__value">${project.description || 'No description provided'}</div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Mentor</div>
-        <div class="project-detail__value">${project.mentor}</div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Assignees</div>
-        <div class="project-detail__value">${assignees}</div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Status</div>
-        <div class="project-detail__value">
-          <span class="status ${this.getStatusClass(project.status)}">${project.status}</span>
-        </div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Progress</div>
-        <div class="project-detail__value">
-          <div class="progress-bar" style="margin-top: 8px;">
-            <div class="progress-fill" style="width: ${project.progress || 0}%"></div>
+  createProjectDetailsHTML(project) {
+    const isOverdue = project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'Completed';
+    
+    return `
+      <div class="project-details">
+        <div class="detail-section">
+          <h4>Status & Progress</h4>
+          <div class="detail-row">
+            <span class="badge badge--${this.getStatusClass(project.status)}">${project.status}</span>
+            ${isOverdue ? '<span class="badge badge--danger">Overdue</span>' : ''}
           </div>
-          <span>${project.progress || 0}%</span>
+          <div class="progress-section">
+            <div class="progress-bar progress-bar--large">
+              <div class="progress-bar__fill" style="width: ${project.progress || 0}%"></div>
+            </div>
+            <span class="progress-text">${project.progress || 0}% Complete</span>
+          </div>
         </div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Dates</div>
-        <div class="project-detail__value">
-          Start: ${project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}<br>
-          Due: ${project.dueDate ? new Date(project.dueDate).toLocaleDateString() : 'Not set'}
+        
+        ${project.description ? `
+          <div class="detail-section">
+            <h4>Description</h4>
+            <p>${project.description}</p>
+          </div>
+        ` : ''}
+        
+        <div class="detail-section">
+          <h4>Team</h4>
+          <div class="detail-row">
+            <strong>Mentor:</strong> ${project.mentor}
+          </div>
+          ${project.assignees?.length ? `
+            <div class="detail-row">
+              <strong>Assignees:</strong> ${project.assignees.join(', ')}
+            </div>
+          ` : ''}
         </div>
-      </div>
-      
-      <div class="project-detail">
-        <div class="project-detail__label">Resources</div>
-        <div class="project-detail__resources">${resources}</div>
-      </div>
-      
-      <div class="comments-section">
-        <div class="project-detail__label">Comments</div>
-        ${comments}
+        
+        <div class="detail-section">
+          <h4>Timeline</h4>
+          ${project.startDate ? `
+            <div class="detail-row">
+              <strong>Start Date:</strong> ${new Date(project.startDate).toLocaleDateString()}
+            </div>
+          ` : ''}
+          ${project.dueDate ? `
+            <div class="detail-row">
+              <strong>Due Date:</strong> ${new Date(project.dueDate).toLocaleDateString()}
+              ${isOverdue ? ' <span class="text-danger">(Overdue)</span>' : ''}
+            </div>
+          ` : ''}
+          <div class="detail-row">
+            <strong>Created:</strong> ${new Date(project.createdAt).toLocaleDateString()}
+          </div>
+          <div class="detail-row">
+            <strong>Last Updated:</strong> ${new Date(project.lastUpdated).toLocaleDateString()}
+          </div>
+        </div>
+        
+        ${project.resources?.length ? `
+          <div class="detail-section">
+            <h4>Resources</h4>
+            <div class="resources-list">
+              ${project.resources.map(resource => `
+                <a href="${resource}" target="_blank" class="resource-link">${resource}</a>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
       </div>
     `;
-
-    const detailsTitle = document.getElementById('detailsTitle');
-    if (detailsTitle) detailsTitle.textContent = project.title;
   }
 
   editCurrentProject() {
-    if (!this.currentProject) return;
+    console.log('Editing current project:', this.currentProject);
+    
+    if (!this.currentProject) {
+      console.error('No current project to edit');
+      return;
+    }
 
     this.isEditMode = true;
+    
+    // Close details modal first
     this.closeDetailsModal();
-
+    
+    // Update modal title
     const modalTitle = document.getElementById('modalTitle');
-    const saveBtn = document.getElementById('saveBtn');
+    if (modalTitle) {
+      modalTitle.textContent = 'Edit Project';
+    }
+    
+    // Populate form with current project data
+    const project = this.currentProject;
+    
+    // Basic fields
+    this.setFormValue('projectTitle', project.title || '');
+    this.setFormValue('projectDescription', project.description || '');
+    this.setFormValue('projectMentor', project.mentor || '');
+    this.setFormValue('projectStatus', project.status || 'Planning');
+    this.setFormValue('projectProgress', project.progress || 0);
+    this.setFormValue('projectStartDate', project.startDate || '');
+    this.setFormValue('projectDueDate', project.dueDate || '');
+    
+    // Handle assignees (convert array to comma-separated string)
+    this.setFormValue('projectAssignees', project.assignees?.join(', ') || '');
+    
+    // Handle resources (convert array to comma-separated string)  
+    this.setFormValue('projectResources', project.resources?.join(', ') || '');
+    
+    // Update progress display
+    const progressValue = document.getElementById('progressValue');
+    if (progressValue) {
+      progressValue.textContent = (project.progress || 0) + '%';
+    }
+    
+    // Show edit modal
+    const modal = document.getElementById('projectModal');
+    if (modal) {
+      modal.classList.add('show');
+    }
+  }
 
-    if (modalTitle) modalTitle.textContent = 'Edit Project';
-    if (saveBtn) saveBtn.textContent = 'Update Project';
-
-    this.populateForm(this.currentProject);
-    this.showModal('projectModal');
+  setFormValue(fieldId, value) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+      field.value = value;
+    }
   }
 
   async deleteCurrentProject() {
     if (!this.currentProject) return;
 
-    if (confirm(`Are you sure you want to delete "${this.currentProject.title}"? This action cannot be undone.`)) {
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
       try {
         await projectStore.deleteProject(this.currentProject.id);
         this.closeDetailsModal();
+        console.log('Project deleted successfully');
       } catch (error) {
-        alert('Failed to delete project. Please try again.');
+        console.error('Error deleting project:', error);
+        alert('Error deleting project. Please try again.');
       }
-    }
-  }
-
-  populateForm(project) {
-    const elements = {
-      projectTitle: project.title,
-      projectDescription: project.description || '',
-      projectMentor: project.mentor,
-      projectAssignees: project.assignees?.join(', ') || '',
-      projectStatus: project.status,
-      projectProgress: project.progress || 0,
-      startDate: project.startDate || '',
-      dueDate: project.dueDate || '',
-      projectResources: project.resources?.join(', ') || ''
-    };
-
-    Object.entries(elements).forEach(([id, value]) => {
-      const element = document.getElementById(id);
-      if (element) element.value = value;
-    });
-  }
-
-  resetForm() {
-    const form = document.getElementById('projectForm');
-    if (form) {
-      form.reset();
-      const progressEl = document.getElementById('projectProgress');
-      if (progressEl) progressEl.value = 0;
     }
   }
 
   async handleFormSubmit(e) {
     e.preventDefault();
-    console.log('Form submitted');
+    console.log('Form submitted, edit mode:', this.isEditMode);
 
-    const projectData = {
-      title: this.getFormValue('projectTitle'),
-      description: this.getFormValue('projectDescription'),
-      mentor: this.getFormValue('projectMentor'),
-      assignees: this.getFormValue('projectAssignees')
-        .split(',')
-        .map(a => a.trim())
-        .filter(a => a),
-      status: this.getFormValue('projectStatus'),
-      progress: parseInt(this.getFormValue('projectProgress')) || 0,
-      startDate: this.getFormValue('startDate'),
-      dueDate: this.getFormValue('dueDate'),
-      resources: this.getFormValue('projectResources')
-        .split(',')
-        .map(r => r.trim())
-        .filter(r => r),
-      comments: []
-    };
-
-    // Validation
-    if (!projectData.title || !projectData.mentor) {
-      alert('Please fill in required fields (Title and Mentor)');
-      return;
-    }
+    const formData = this.getFormData();
+    if (!formData) return;
 
     try {
       if (this.isEditMode && this.currentProject) {
-        await projectStore.updateProject(this.currentProject.id, projectData);
-        console.log('Project updated');
+        console.log('Updating project:', this.currentProject.id, formData);
+        await projectStore.updateProject(this.currentProject.id, formData);
+        console.log('Project updated successfully');
       } else {
-        await projectStore.addProject(projectData);
-        console.log('Project added');
+        console.log('Adding new project:', formData);
+        await projectStore.addProject(formData);
+        console.log('Project added successfully');
       }
 
       this.closeModal();
     } catch (error) {
-      console.error('Save error:', error);
-      alert('Failed to save project. Please try again.');
+      console.error('Error saving project:', error);
+      alert('Error saving project. Please try again.');
     }
   }
 
-  getFormValue(id) {
-    const element = document.getElementById(id);
-    return element ? element.value.trim() : '';
-  }
+  getFormData() {
+    const title = document.getElementById('projectTitle')?.value?.trim();
+    const description = document.getElementById('projectDescription')?.value?.trim();
+    const mentor = document.getElementById('projectMentor')?.value?.trim();
 
-  handleSearch(e) {
-    this.searchTerm = e.target.value;
-    this.renderProjects();
-  }
-
-  handleStatusFilter(e) {
-    this.statusFilter = e.target.value;
-    this.renderProjects();
-  }
-
-  handleMentorFilter(e) {
-    this.mentorFilter = e.target.value;
-    this.renderProjects();
-  }
-
-  showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+    if (!title || !mentor) {
+      alert('Please fill in all required fields (Title and Mentor)');
+      return null;
     }
+
+    const assigneesStr = document.getElementById('projectAssignees')?.value?.trim() || '';
+    const resourcesStr = document.getElementById('projectResources')?.value?.trim() || '';
+
+    return {
+      title,
+      description,
+      mentor,
+      status: document.getElementById('projectStatus')?.value || 'Planning',
+      progress: parseInt(document.getElementById('projectProgress')?.value || 0),
+      startDate: document.getElementById('projectStartDate')?.value || null,
+      dueDate: document.getElementById('projectDueDate')?.value || null,
+      assignees: assigneesStr ? assigneesStr.split(',').map(s => s.trim()).filter(s => s) : [],
+      resources: resourcesStr ? resourcesStr.split(',').map(s => s.trim()).filter(s => s) : []
+    };
   }
 
   closeModal() {
     const modal = document.getElementById('projectModal');
     if (modal) {
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-      this.resetForm();
+      modal.classList.remove('show');
     }
+    
+    // Reset state
+    this.isEditMode = false;
+    this.currentProject = null;
   }
 
   closeDetailsModal() {
-    const modal = document.getElementById('detailsModal');
+    const modal = document.getElementById('projectDetailsModal');
     if (modal) {
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-      this.currentProject = null;
+      modal.classList.remove('show');
     }
   }
 
-  exportProjects() {
-    const projects = projectStore.getProjects();
-    const csv = this.convertToCSV(projects);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'pdc-projects.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  handleSearch(e) {
+    this.searchTerm = e.target.value;
+    this.updateUI();
   }
 
-  convertToCSV(projects) {
-    const headers = ['Title', 'Description', 'Mentor', 'Assignees', 'Status', 'Progress', 'Start Date', 'Due Date'];
-    const rows = projects.map(project => [
-      project.title || '',
-      project.description || '',
-      project.mentor || '',
-      project.assignees?.join('; ') || '',
-      project.status || '',
-      project.progress || 0,
-      project.startDate || '',
-      project.dueDate || ''
-    ]);
+  handleStatusFilter(e) {
+    this.statusFilter = e.target.value;
+    this.updateUI();
+  }
 
-    return [headers, ...rows]
-      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+  handleMentorFilter(e) {
+    this.mentorFilter = e.target.value;
+    this.updateUI();
+  }
+
+  exportProjects() {
+    try {
+      const projects = projectStore.getProjects();
+      const dataStr = JSON.stringify(projects, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(dataBlob);
+      link.download = `pdc-projects-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      
+      URL.revokeObjectURL(link.href);
+      console.log('Projects exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Error exporting projects');
+    }
   }
 }
 
 // Initialize the application
-new UIController();
+const uiController = new UIController();
+
+// Make controller globally available for debugging
+window.uiController = uiController;
+window.projectStore = projectStore;
