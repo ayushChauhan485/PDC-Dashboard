@@ -289,7 +289,7 @@ class UIController {
   //   setTimeout(() => {
   //     projectStore.initializeWithDemoData().catch(console.error);
   //   }, 1000);
-  // }
+  }
 
   initializeEventListeners() {
     console.log('Setting up event listeners');
