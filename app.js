@@ -19,7 +19,7 @@ function initializeFirebase() {
       console.error('Firebase not loaded');
       return false;
     }
-
+    
     firebase.initializeApp(firebaseConfig);
     database = firebase.database();
     isFirebaseInitialized = true;
@@ -37,7 +37,7 @@ class FirebaseProjectStore {
     this.projects = new Map();
     this.listeners = new Set();
     this.isConnected = false;
-
+    
     if (initializeFirebase()) {
       this.projectsRef = database.ref('projects');
       this.setupConnectionListener();
@@ -52,7 +52,7 @@ class FirebaseProjectStore {
 
   setupConnectionListener() {
     if (!isFirebaseInitialized) return;
-
+    
     const connectedRef = database.ref('.info/connected');
     connectedRef.on('value', (snapshot) => {
       this.isConnected = snapshot.val();
@@ -64,7 +64,7 @@ class FirebaseProjectStore {
   updateConnectionStatus() {
     const statusElement = document.getElementById('connectionStatus');
     if (!statusElement) return;
-
+    
     if (this.useLocalStorage) {
       statusElement.className = 'status status--warning';
       statusElement.textContent = 'Local Storage';
@@ -79,17 +79,17 @@ class FirebaseProjectStore {
 
   setupDataListener() {
     if (!isFirebaseInitialized || !this.projectsRef) return;
-
+    
     this.projectsRef.on('value', (snapshot) => {
       const data = snapshot.val();
       this.projects.clear();
-
+      
       if (data) {
         Object.entries(data).forEach(([id, project]) => {
           this.projects.set(id, { ...project, id });
         });
       }
-
+      
       this.notifyListeners();
     }, (error) => {
       console.error('Firebase read error:', error);
@@ -115,7 +115,7 @@ class FirebaseProjectStore {
 
   saveToLocalStorage() {
     if (!this.useLocalStorage) return;
-
+    
     try {
       const projects = Array.from(this.projects.values());
       localStorage.setItem('pdc-projects', JSON.stringify(projects));
@@ -155,7 +155,7 @@ class FirebaseProjectStore {
         createdAt: Date.now(),
         lastUpdated: Date.now()
       };
-
+      
       if (this.useLocalStorage) {
         this.projects.set(id, project);
         this.saveToLocalStorage();
@@ -177,7 +177,7 @@ class FirebaseProjectStore {
         ...updates,
         lastUpdated: Date.now()
       };
-
+      
       if (this.useLocalStorage) {
         const existing = this.projects.get(id);
         if (existing) {
@@ -222,7 +222,7 @@ class FirebaseProjectStore {
   // Initialize with demo data if database is empty
   async initializeWithDemoData() {
     if (this.projects.size > 0) return;
-
+    
     const demoProjects = [
       {
         title: "AI Chatbot Development",
@@ -271,7 +271,7 @@ class UIController {
     this.searchTerm = '';
     this.statusFilter = '';
     this.mentorFilter = '';
-
+    
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.initialize());
@@ -284,112 +284,112 @@ class UIController {
     console.log('Initializing UI Controller');
     this.initializeEventListeners();
     this.initializeDataListener();
-
-    // //   // Initialize demo data after a short delay
-    //   setTimeout(() => {
-    //     projectStore.initializeWithDemoData().catch(console.error);
-    //   }, 1000);
   }
 
   initializeEventListeners() {
     console.log('Setting up event listeners');
-
+    
+    // Define a helper for closing the details modal and resetting state
+    const closeDetailsActions = () => {
+      this.closeDetailsModal();
+      this.currentProject = null;
+    };
+  
     // Modal controls
     const addProjectBtn = document.getElementById('addProjectBtn');
     const emptyStateBtn = document.getElementById('emptyStateBtn');
     const closeModal = document.getElementById('closeModal');
-    const closeDetailsModal = document.getElementById('closeDetailsModal');
+    const closeDetailsModalBtn = document.getElementById('closeDetailsModal');
     const cancelBtn = document.getElementById('cancelBtn');
     const closeDetailsBtn = document.getElementById('closeDetailsBtn');
-
+  
     if (addProjectBtn) {
       addProjectBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Add project button clicked');
         this.openAddProjectModal();
       });
     }
-
+  
     if (emptyStateBtn) {
       emptyStateBtn.addEventListener('click', (e) => {
         e.preventDefault();
         this.openAddProjectModal();
       });
     }
-
+  
     if (closeModal) {
       closeModal.addEventListener('click', () => this.closeModal());
     }
-
-    if (closeDetailsModal) {
-      closeDetailsModal.addEventListener('click', () => this.closeDetailsModal());
+  
+    if (closeDetailsModalBtn) {
+      closeDetailsModalBtn.addEventListener('click', closeDetailsActions);
     }
-
+  
     if (cancelBtn) {
       cancelBtn.addEventListener('click', () => this.closeModal());
     }
-
+  
     if (closeDetailsBtn) {
-      closeDetailsBtn.addEventListener('click', () => this.closeDetailsModal());
+      closeDetailsBtn.addEventListener('click', closeDetailsActions);
     }
-
+  
     // Form submission
     const projectForm = document.getElementById('projectForm');
     if (projectForm) {
       projectForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
     }
-
+  
     // Project actions
     const editProjectBtn = document.getElementById('editProjectBtn');
     const deleteProjectBtn = document.getElementById('deleteProjectBtn');
-
+    
     if (editProjectBtn) {
       editProjectBtn.addEventListener('click', () => this.editCurrentProject());
     }
-
+  
     if (deleteProjectBtn) {
       deleteProjectBtn.addEventListener('click', () => this.deleteCurrentProject());
     }
-
+  
     // Export functionality
     const exportBtn = document.getElementById('exportBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => this.exportProjects());
     }
-
+  
     // Search and filters
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
     const mentorFilter = document.getElementById('mentorFilter');
-
+  
     if (searchInput) {
       searchInput.addEventListener('input', (e) => this.handleSearch(e));
     }
-
+  
     if (statusFilter) {
       statusFilter.addEventListener('change', (e) => this.handleStatusFilter(e));
     }
-
+  
     if (mentorFilter) {
       mentorFilter.addEventListener('change', (e) => this.handleMentorFilter(e));
     }
-
+  
     // Modal overlay clicks
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('modal__overlay')) {
         this.closeModal();
-        this.closeDetailsModal();
+        closeDetailsActions();
       }
     });
-
+  
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.closeModal();
-        this.closeDetailsModal();
+        closeDetailsActions();
       }
     });
-
+  
     console.log('Event listeners set up complete');
   }
 
@@ -410,13 +410,12 @@ class UIController {
     const projectsGrid = document.getElementById('projectsGrid');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const emptyState = document.getElementById('emptyState');
-
+    
     if (!projectsGrid || !loadingSpinner || !emptyState) return;
-
+    
     const projects = this.getFilteredProjects();
     console.log('Rendering projects:', projects.length);
 
-    // Hide loading spinner
     loadingSpinner.style.display = 'none';
 
     if (projects.length === 0) {
@@ -429,7 +428,6 @@ class UIController {
     projectsGrid.style.display = 'grid';
     projectsGrid.innerHTML = projects.map(project => this.createProjectCard(project)).join('');
 
-    // Add click listeners to project cards
     projectsGrid.querySelectorAll('.project-card').forEach(card => {
       card.addEventListener('click', () => {
         const projectId = card.dataset.projectId;
@@ -440,7 +438,7 @@ class UIController {
 
   createProjectCard(project) {
     const isOverdue = project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'Completed';
-    const assigneesList = project.assignees?.map(assignee =>
+    const assigneesList = project.assignees?.map(assignee => 
       `<span class="assignee-tag">${assignee}</span>`
     ).join('') || '';
 
@@ -451,7 +449,7 @@ class UIController {
         <div class="project-card__header">
           <h3 class="project-card__title">${project.title}</h3>
           <div class="project-card__meta">
-            <span class="project-card__mentor">👨‍🏫 ${project.mentor}</span>
+            <span class="project-card__mentor">🧑‍🏫 ${project.mentor}</span>
             <span class="status ${statusClass}">${project.status}</span>
           </div>
         </div>
@@ -526,7 +524,7 @@ class UIController {
     const totalProjects = projects.length;
     const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
     const completedProjects = projects.filter(p => p.status === 'Completed').length;
-    const overdue = projects.filter(p =>
+    const overdue = projects.filter(p => 
       p.dueDate && new Date(p.dueDate) < new Date() && p.status !== 'Completed'
     ).length;
 
@@ -544,30 +542,28 @@ class UIController {
   updateFilters() {
     const projects = projectStore.getProjects();
     const mentorFilter = document.getElementById('mentorFilter');
-
+    
     if (!mentorFilter) return;
-
+    
     const currentMentorValue = mentorFilter.value;
 
-    // Update mentor filter options
     const mentors = [...new Set(projects.map(p => p.mentor))].sort();
-    mentorFilter.innerHTML = '<option value="">All Mentors</option>' +
+    mentorFilter.innerHTML = '<option value="">All Mentors</option>' + 
       mentors.map(mentor => `<option value="${mentor}">${mentor}</option>`).join('');
-
+    
     mentorFilter.value = currentMentorValue;
   }
 
   openAddProjectModal() {
-    console.log('Opening add project modal');
     this.isEditMode = false;
     this.currentProject = null;
-
+    
     const modalTitle = document.getElementById('modalTitle');
     const saveBtn = document.getElementById('saveBtn');
-
+    
     if (modalTitle) modalTitle.textContent = 'Add New Project';
     if (saveBtn) saveBtn.textContent = 'Save Project';
-
+    
     this.resetForm();
     this.showModal('projectModal');
   }
@@ -584,13 +580,13 @@ class UIController {
   renderProjectDetails(project) {
     const detailsContainer = document.getElementById('projectDetails');
     if (!detailsContainer) return;
-
-    const resources = project.resources?.map(url =>
+    
+    const resources = project.resources?.map(url => 
       `<a href="${url}" target="_blank" class="resource-link">${url}</a>`
     ).join('') || 'No resources added';
 
     const assignees = project.assignees?.join(', ') || 'No assignees';
-    const comments = project.comments?.map(comment =>
+    const comments = project.comments?.map(comment => 
       `<div class="comment">${comment}</div>`
     ).join('') || '<div class="comment">No comments yet</div>';
 
@@ -655,26 +651,18 @@ class UIController {
     if (detailsTitle) detailsTitle.textContent = project.title;
   }
 
-  // Located in app.js within the UIController class
-
   editCurrentProject() {
     if (!this.currentProject) return;
 
-    // Preserve the project object because closeDetailsModal will nullify it.
-    const projectToEdit = this.currentProject;
-
     this.isEditMode = true;
     this.closeDetailsModal();
-
-    // Restore the project reference so it's available for populateForm and handleFormSubmit.
-    this.currentProject = projectToEdit;
-
+    
     const modalTitle = document.getElementById('modalTitle');
     const saveBtn = document.getElementById('saveBtn');
-
+    
     if (modalTitle) modalTitle.textContent = 'Edit Project';
     if (saveBtn) saveBtn.textContent = 'Update Project';
-
+    
     this.populateForm(this.currentProject);
     this.showModal('projectModal');
   }
@@ -722,8 +710,7 @@ class UIController {
 
   async handleFormSubmit(e) {
     e.preventDefault();
-    console.log('Form submitted');
-
+    
     const projectData = {
       title: this.getFormValue('projectTitle'),
       description: this.getFormValue('projectDescription'),
@@ -740,10 +727,9 @@ class UIController {
         .split(',')
         .map(r => r.trim())
         .filter(r => r),
-      comments: []
+      comments: this.currentProject?.comments || []
     };
 
-    // Validation
     if (!projectData.title || !projectData.mentor) {
       alert('Please fill in required fields (Title and Mentor)');
       return;
@@ -752,13 +738,14 @@ class UIController {
     try {
       if (this.isEditMode && this.currentProject) {
         await projectStore.updateProject(this.currentProject.id, projectData);
-        console.log('Project updated');
       } else {
         await projectStore.addProject(projectData);
-        console.log('Project added');
       }
-
+      
       this.closeModal();
+      this.currentProject = null;
+      this.isEditMode = false;
+
     } catch (error) {
       console.error('Save error:', error);
       alert('Failed to save project. Please try again.');
@@ -807,7 +794,6 @@ class UIController {
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
-      this.currentProject = null;
     }
   }
 
