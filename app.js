@@ -19,7 +19,7 @@ function initializeFirebase() {
       console.error('Firebase not loaded');
       return false;
     }
-    
+
     firebase.initializeApp(firebaseConfig);
     database = firebase.database();
     isFirebaseInitialized = true;
@@ -37,7 +37,7 @@ class FirebaseProjectStore {
     this.projects = new Map();
     this.listeners = new Set();
     this.isConnected = false;
-    
+
     if (initializeFirebase()) {
       this.projectsRef = database.ref('projects');
       this.setupConnectionListener();
@@ -52,7 +52,7 @@ class FirebaseProjectStore {
 
   setupConnectionListener() {
     if (!isFirebaseInitialized) return;
-    
+
     const connectedRef = database.ref('.info/connected');
     connectedRef.on('value', (snapshot) => {
       this.isConnected = snapshot.val();
@@ -64,7 +64,7 @@ class FirebaseProjectStore {
   updateConnectionStatus() {
     const statusElement = document.getElementById('connectionStatus');
     if (!statusElement) return;
-    
+
     if (this.useLocalStorage) {
       statusElement.className = 'status status--warning';
       statusElement.textContent = 'Local Storage';
@@ -79,17 +79,17 @@ class FirebaseProjectStore {
 
   setupDataListener() {
     if (!isFirebaseInitialized || !this.projectsRef) return;
-    
+
     this.projectsRef.on('value', (snapshot) => {
       const data = snapshot.val();
       this.projects.clear();
-      
+
       if (data) {
         Object.entries(data).forEach(([id, project]) => {
           this.projects.set(id, { ...project, id });
         });
       }
-      
+
       this.notifyListeners();
     }, (error) => {
       console.error('Firebase read error:', error);
@@ -115,7 +115,7 @@ class FirebaseProjectStore {
 
   saveToLocalStorage() {
     if (!this.useLocalStorage) return;
-    
+
     try {
       const projects = Array.from(this.projects.values());
       localStorage.setItem('pdc-projects', JSON.stringify(projects));
@@ -155,7 +155,7 @@ class FirebaseProjectStore {
         createdAt: Date.now(),
         lastUpdated: Date.now()
       };
-      
+
       if (this.useLocalStorage) {
         this.projects.set(id, project);
         this.saveToLocalStorage();
@@ -177,7 +177,7 @@ class FirebaseProjectStore {
         ...updates,
         lastUpdated: Date.now()
       };
-      
+
       if (this.useLocalStorage) {
         const existing = this.projects.get(id);
         if (existing) {
@@ -219,49 +219,49 @@ class FirebaseProjectStore {
     return this.projects.get(id);
   }
 
-  // Initialize with demo data if database is empty
-  async initializeWithDemoData() {
-    if (this.projects.size > 0) return;
-    
-    const demoProjects = [
-      {
-        title: "AI Chatbot Development",
-        description: "Develop an intelligent chatbot using natural language processing for customer support automation.",
-        mentor: "Dr. Sarah Chen",
-        assignees: ["Alex Kumar", "Maria Rodriguez"],
-        status: "In Progress",
-        startDate: "2024-01-15",
-        dueDate: "2024-03-30",
-        progress: 65,
-        resources: ["https://github.com/example/chatbot", "https://docs.openai.com/"],
-        comments: ["Initial prototype completed", "Working on NLP improvements"]
-      },
-      {
-        title: "Mobile App UI/UX Redesign",
-        description: "Complete redesign of the mobile application interface with focus on user experience and accessibility.",
-        mentor: "Prof. James Wilson",
-        assignees: ["Emily Zhang", "David Thompson", "Lisa Park"],
-        status: "Planning",
-        startDate: "2024-02-01",
-        dueDate: "2024-04-15",
-        progress: 25,
-        resources: ["https://figma.com/design-system", "https://material.io/design"],
-        comments: ["User research phase completed", "Moving to wireframe stage"]
-      }
-    ];
+  //   // Initialize with demo data if database is empty
+  //   async initializeWithDemoData() {
+  //     if (this.projects.size > 0) return;
 
-    try {
-      for (const project of demoProjects) {
-        await this.addProject(project);
-      }
-    } catch (error) {
-      console.error('Demo data initialization error:', error);
-    }
-  }
-}
+  //     const demoProjects = [
+  //       {
+  //         title: "AI Chatbot Development",
+  //         description: "Develop an intelligent chatbot using natural language processing for customer support automation.",
+  //         mentor: "Dr. Sarah Chen",
+  //         assignees: ["Alex Kumar", "Maria Rodriguez"],
+  //         status: "In Progress",
+  //         startDate: "2024-01-15",
+  //         dueDate: "2024-03-30",
+  //         progress: 65,
+  //         resources: ["https://github.com/example/chatbot", "https://docs.openai.com/"],
+  //         comments: ["Initial prototype completed", "Working on NLP improvements"]
+  //       },
+  //       {
+  //         title: "Mobile App UI/UX Redesign",
+  //         description: "Complete redesign of the mobile application interface with focus on user experience and accessibility.",
+  //         mentor: "Prof. James Wilson",
+  //         assignees: ["Emily Zhang", "David Thompson", "Lisa Park"],
+  //         status: "Planning",
+  //         startDate: "2024-02-01",
+  //         dueDate: "2024-04-15",
+  //         progress: 25,
+  //         resources: ["https://figma.com/design-system", "https://material.io/design"],
+  //         comments: ["User research phase completed", "Moving to wireframe stage"]
+  //       }
+  //     ];
 
-// Initialize store
-const projectStore = new FirebaseProjectStore();
+  //     try {
+  //       for (const project of demoProjects) {
+  //         await this.addProject(project);
+  //       }
+  //     } catch (error) {
+  //       console.error('Demo data initialization error:', error);
+  //     }
+  //   }
+  // }
+
+  // Initialize store
+  const projectStore = new FirebaseProjectStore();
 
 // UI State Management
 class UIController {
@@ -271,7 +271,7 @@ class UIController {
     this.searchTerm = '';
     this.statusFilter = '';
     this.mentorFilter = '';
-    
+
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.initialize());
@@ -284,16 +284,16 @@ class UIController {
     console.log('Initializing UI Controller');
     this.initializeEventListeners();
     this.initializeDataListener();
-    
-  // //   // Initialize demo data after a short delay
-  //   setTimeout(() => {
-  //     projectStore.initializeWithDemoData().catch(console.error);
-  //   }, 1000);
+
+    // //   // Initialize demo data after a short delay
+    //   setTimeout(() => {
+    //     projectStore.initializeWithDemoData().catch(console.error);
+    //   }, 1000);
   }
 
   initializeEventListeners() {
     console.log('Setting up event listeners');
-    
+
     // Modal controls
     const addProjectBtn = document.getElementById('addProjectBtn');
     const emptyStateBtn = document.getElementById('emptyStateBtn');
@@ -342,7 +342,7 @@ class UIController {
     // Project actions
     const editProjectBtn = document.getElementById('editProjectBtn');
     const deleteProjectBtn = document.getElementById('deleteProjectBtn');
-    
+
     if (editProjectBtn) {
       editProjectBtn.addEventListener('click', () => this.editCurrentProject());
     }
@@ -410,9 +410,9 @@ class UIController {
     const projectsGrid = document.getElementById('projectsGrid');
     const loadingSpinner = document.getElementById('loadingSpinner');
     const emptyState = document.getElementById('emptyState');
-    
+
     if (!projectsGrid || !loadingSpinner || !emptyState) return;
-    
+
     const projects = this.getFilteredProjects();
     console.log('Rendering projects:', projects.length);
 
@@ -440,7 +440,7 @@ class UIController {
 
   createProjectCard(project) {
     const isOverdue = project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'Completed';
-    const assigneesList = project.assignees?.map(assignee => 
+    const assigneesList = project.assignees?.map(assignee =>
       `<span class="assignee-tag">${assignee}</span>`
     ).join('') || '';
 
@@ -526,7 +526,7 @@ class UIController {
     const totalProjects = projects.length;
     const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
     const completedProjects = projects.filter(p => p.status === 'Completed').length;
-    const overdue = projects.filter(p => 
+    const overdue = projects.filter(p =>
       p.dueDate && new Date(p.dueDate) < new Date() && p.status !== 'Completed'
     ).length;
 
@@ -544,16 +544,16 @@ class UIController {
   updateFilters() {
     const projects = projectStore.getProjects();
     const mentorFilter = document.getElementById('mentorFilter');
-    
+
     if (!mentorFilter) return;
-    
+
     const currentMentorValue = mentorFilter.value;
 
     // Update mentor filter options
     const mentors = [...new Set(projects.map(p => p.mentor))].sort();
-    mentorFilter.innerHTML = '<option value="">All Mentors</option>' + 
+    mentorFilter.innerHTML = '<option value="">All Mentors</option>' +
       mentors.map(mentor => `<option value="${mentor}">${mentor}</option>`).join('');
-    
+
     mentorFilter.value = currentMentorValue;
   }
 
@@ -561,13 +561,13 @@ class UIController {
     console.log('Opening add project modal');
     this.isEditMode = false;
     this.currentProject = null;
-    
+
     const modalTitle = document.getElementById('modalTitle');
     const saveBtn = document.getElementById('saveBtn');
-    
+
     if (modalTitle) modalTitle.textContent = 'Add New Project';
     if (saveBtn) saveBtn.textContent = 'Save Project';
-    
+
     this.resetForm();
     this.showModal('projectModal');
   }
@@ -584,13 +584,13 @@ class UIController {
   renderProjectDetails(project) {
     const detailsContainer = document.getElementById('projectDetails');
     if (!detailsContainer) return;
-    
-    const resources = project.resources?.map(url => 
+
+    const resources = project.resources?.map(url =>
       `<a href="${url}" target="_blank" class="resource-link">${url}</a>`
     ).join('') || 'No resources added';
 
     const assignees = project.assignees?.join(', ') || 'No assignees';
-    const comments = project.comments?.map(comment => 
+    const comments = project.comments?.map(comment =>
       `<div class="comment">${comment}</div>`
     ).join('') || '<div class="comment">No comments yet</div>';
 
@@ -660,13 +660,13 @@ class UIController {
 
     this.isEditMode = true;
     this.closeDetailsModal();
-    
+
     const modalTitle = document.getElementById('modalTitle');
     const saveBtn = document.getElementById('saveBtn');
-    
+
     if (modalTitle) modalTitle.textContent = 'Edit Project';
     if (saveBtn) saveBtn.textContent = 'Update Project';
-    
+
     this.populateForm(this.currentProject);
     this.showModal('projectModal');
   }
@@ -715,7 +715,7 @@ class UIController {
   async handleFormSubmit(e) {
     e.preventDefault();
     console.log('Form submitted');
-    
+
     const projectData = {
       title: this.getFormValue('projectTitle'),
       description: this.getFormValue('projectDescription'),
@@ -749,7 +749,7 @@ class UIController {
         await projectStore.addProject(projectData);
         console.log('Project added');
       }
-      
+
       this.closeModal();
     } catch (error) {
       console.error('Save error:', error);

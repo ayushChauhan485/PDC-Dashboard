@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <!-- Firebase SDK -->
 </head>
+
 <body>
     <div id="app">
         <!-- Header -->
@@ -21,7 +23,8 @@
                     </div>
                     <div class="header__actions">
                         <button class="btn btn--primary" id="addProjectBtn" type="button">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
@@ -38,7 +41,8 @@
             <div class="container">
                 <div class="filters__content">
                     <div class="search-box">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Search projects..." autocomplete="off">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search projects..."
+                            autocomplete="off">
                     </div>
                     <div class="filter-controls">
                         <select id="statusFilter" class="form-control">
@@ -113,7 +117,7 @@
                             <label class="form-label" for="projectTitle">Project Title *</label>
                             <input type="text" id="projectTitle" class="form-control" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label" for="projectDescription">Description</label>
                             <textarea id="projectDescription" class="form-control" rows="3"></textarea>
@@ -126,7 +130,8 @@
 
                         <div class="form-group">
                             <label class="form-label" for="projectAssignees">Assignees (comma-separated)</label>
-                            <input type="text" id="projectAssignees" class="form-control" placeholder="John Doe, Jane Smith">
+                            <input type="text" id="projectAssignees" class="form-control"
+                                placeholder="John Doe, Jane Smith">
                         </div>
 
                         <div class="form-row">
@@ -139,10 +144,11 @@
                                     <option value="Completed">Completed</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label class="form-label" for="projectProgress">Progress (%)</label>
-                                <input type="number" id="projectProgress" class="form-control" min="0" max="100" value="0">
+                                <input type="number" id="projectProgress" class="form-control" min="0" max="100"
+                                    value="0">
                             </div>
                         </div>
 
@@ -151,7 +157,7 @@
                                 <label class="form-label" for="startDate">Start Date</label>
                                 <input type="date" id="startDate" class="form-control">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label class="form-label" for="dueDate">Due Date</label>
                                 <input type="date" id="dueDate" class="form-control">
@@ -160,7 +166,8 @@
 
                         <div class="form-group">
                             <label class="form-label" for="projectResources">Resources (URLs, comma-separated)</label>
-                            <textarea id="projectResources" class="form-control" rows="2" placeholder="https://example.com, https://docs.google.com/..."></textarea>
+                            <textarea id="projectResources" class="form-control" rows="2"
+                                placeholder="https://example.com, https://docs.google.com/..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -197,8 +204,9 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    
+
     <!-- Application Script -->
     <script src="app.js"></script>
 </body>
+
 </html>
