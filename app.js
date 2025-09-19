@@ -285,10 +285,10 @@ class UIController {
     this.initializeEventListeners();
     this.initializeDataListener();
     
-  //   // Initialize demo data after a short delay
-    setTimeout(() => {
-      projectStore.initializeWithDemoData().catch(console.error);
-    }, 1000);
+  // //   // Initialize demo data after a short delay
+  //   setTimeout(() => {
+  //     projectStore.initializeWithDemoData().catch(console.error);
+  //   }, 1000);
   }
 
   initializeEventListeners() {
