@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDC Project Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20250920-2">
     <!-- Firebase SDK -->
 </head>
 
@@ -104,34 +104,36 @@
     </div>
 
     <!-- Add/Edit Project Modal -->
-    <div id="projectModal" class="modal hidden">
+    <div id="projectModal" class="modal hidden" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
         <div class="modal__overlay">
             <div class="modal__content">
                 <div class="modal__header">
                     <h3 id="modalTitle">Add New Project</h3>
-                    <button class="modal__close" id="closeModal" type="button">&times;</button>
+                    <button class="modal__close" id="closeModal" type="button" aria-label="Close modal">&times;</button>
                 </div>
                 <div class="modal__body">
-                    <form id="projectForm">
+                    <form id="projectForm" novalidate>
                         <div class="form-group">
                             <label class="form-label" for="projectTitle">Project Title *</label>
-                            <input type="text" id="projectTitle" class="form-control" required>
+                            <input type="text" id="projectTitle" class="form-control" required aria-describedby="projectTitle-error">
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="projectDescription">Description</label>
-                            <textarea id="projectDescription" class="form-control" rows="3"></textarea>
+                            <textarea id="projectDescription" class="form-control" rows="3" aria-describedby="projectDescription-help"></textarea>
+                            <small id="projectDescription-help" class="form-text">Brief overview of the project</small>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="projectMentor">Mentor *</label>
-                            <input type="text" id="projectMentor" class="form-control" required>
+                            <input type="text" id="projectMentor" class="form-control" required aria-describedby="projectMentor-error">
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="projectAssignees">Assignees (comma-separated)</label>
                             <input type="text" id="projectAssignees" class="form-control"
-                                placeholder="John Doe, Jane Smith">
+                                placeholder="John Doe, Jane Smith" aria-describedby="assignees-help">
+                            <small id="assignees-help" class="form-text">Enter multiple names separated by commas</small>
                         </div>
 
                         <div class="form-row">
@@ -148,7 +150,8 @@
                             <div class="form-group">
                                 <label class="form-label" for="projectProgress">Progress (%)</label>
                                 <input type="number" id="projectProgress" class="form-control" min="0" max="100"
-                                    value="0">
+                                    value="0" aria-describedby="progress-help">
+                                <small id="progress-help" class="form-text">0-100%</small>
                             </div>
                         </div>
 
@@ -167,7 +170,8 @@
                         <div class="form-group">
                             <label class="form-label" for="projectResources">Resources (URLs, comma-separated)</label>
                             <textarea id="projectResources" class="form-control" rows="2"
-                                placeholder="https://example.com, https://docs.google.com/..."></textarea>
+                                placeholder="https://example.com, https://docs.google.com/..." aria-describedby="resources-help"></textarea>
+                            <small id="resources-help" class="form-text">Enter valid URLs separated by commas</small>
                         </div>
                     </form>
                 </div>
@@ -180,15 +184,15 @@
     </div>
 
     <!-- Project Details Modal -->
-    <div id="detailsModal" class="modal hidden">
+    <div id="detailsModal" class="modal hidden" role="dialog" aria-labelledby="detailsTitle" aria-modal="true">
         <div class="modal__overlay">
             <div class="modal__content modal__content--large">
                 <div class="modal__header">
                     <h3 id="detailsTitle">Project Details</h3>
-                    <button class="modal__close" id="closeDetailsModal" type="button">&times;</button>
+                    <button class="modal__close" id="closeDetailsModal" type="button" aria-label="Close details">&times;</button>
                 </div>
                 <div class="modal__body">
-                    <div id="projectDetails">
+                    <div id="projectDetails" role="region" aria-live="polite">
                         <!-- Project details will be loaded here -->
                     </div>
                 </div>
@@ -205,8 +209,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-    <!-- Application Script -->
-    <script src="app.js"></script>
+    <!-- Application Script with cache busting -->
+    <script src="app.js?v=20250920-2"></script>
 </body>
 
 </html>
