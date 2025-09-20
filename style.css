@@ -562,6 +562,13 @@ select.form-control {
   margin-bottom: var(--space-16);
 }
 
+.form-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-4);
+  display: block;
+}
+
 /* Card component */
 .card {
   background-color: var(--color-surface);
@@ -1272,5 +1279,129 @@ select.form-control {
 
   .projects-grid {
     gap: var(--space-16);
+  }
+}
+
+/* Form Validation and Notifications */
+.form-control.error {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(var(--color-error-rgb), 0.1);
+}
+
+.form-error {
+  color: var(--color-error);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.form-error::before {
+  content: "⚠";
+  font-size: var(--font-size-sm);
+}
+
+/* Notification System */
+.notification {
+  position: fixed;
+  top: var(--space-20);
+  right: var(--space-20);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  max-width: 400px;
+  z-index: 2000;
+  animation: slideInRight 0.3s ease-out;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid;
+}
+
+.notification--success {
+  background-color: rgba(var(--color-success-rgb), 0.1);
+  color: var(--color-success);
+  border-color: rgba(var(--color-success-rgb), 0.2);
+}
+
+.notification--error {
+  background-color: rgba(var(--color-error-rgb), 0.1);
+  color: var(--color-error);
+  border-color: rgba(var(--color-error-rgb), 0.2);
+}
+
+.notification--warning {
+  background-color: rgba(var(--color-warning-rgb), 0.1);
+  color: var(--color-warning);
+  border-color: rgba(var(--color-warning-rgb), 0.2);
+}
+
+.notification--info {
+  background-color: rgba(var(--color-info-rgb), 0.1);
+  color: var(--color-info);
+  border-color: rgba(var(--color-info-rgb), 0.2);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Loading States */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn--loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn--loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .form-control {
+    border-width: 2px;
+  }
+  
+  .btn {
+    border-width: 2px;
+    border-style: solid;
+  }
+  
+  .project-card {
+    border-width: 2px;
   }
 }

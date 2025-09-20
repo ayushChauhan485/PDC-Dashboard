@@ -1,13 +1,23 @@
-// Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBO4MrF8lyQn8Z291h2i6xvsG991TPzP08",
-  authDomain: "pdc-dashboard-8963a.firebaseapp.com",
-  databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "pdc-dashboard-8963a",
-  storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
-  messagingSenderId: "340274488388",
-  appId: "1:340274488388:web:ca56cabacd68e0521d0811"
-};
+// Firebase Configuration - loaded from external file
+// See firebase-config.example.js for setup instructions
+let firebaseConfig;
+
+// Check if config is loaded
+if (typeof window.firebaseConfig !== 'undefined') {
+  firebaseConfig = window.firebaseConfig;
+} else {
+  // Fallback for development - replace with your config
+  console.warn('Firebase config not found. Please create firebase-config.js from firebase-config.example.js');
+  firebaseConfig = {
+    apiKey: "your-api-key-here",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.region.firebasedatabase.app",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "your-sender-id",
+    appId: "your-app-id"
+  };
+}
 
 // Initialize Firebase with error handling
 let database;
@@ -68,12 +78,15 @@ class FirebaseProjectStore {
     if (this.useLocalStorage) {
       statusElement.className = 'status status--warning';
       statusElement.textContent = 'Local Storage';
+      statusElement.setAttribute('title', 'Working offline - data stored locally');
     } else if (this.isConnected) {
       statusElement.className = 'status status--success';
       statusElement.textContent = 'Connected';
+      statusElement.setAttribute('title', 'Connected to Firebase');
     } else {
       statusElement.className = 'status status--error';
       statusElement.textContent = 'Disconnected';
+      statusElement.setAttribute('title', 'Connection lost - data may not sync');
     }
   }
 
@@ -294,18 +307,27 @@ class UIController {
   initializeEventListeners() {
     console.log('Setting up event listeners');
     
-    // Modal controls
+    // Get all required elements
     const addProjectBtn = document.getElementById('addProjectBtn');
     const emptyStateBtn = document.getElementById('emptyStateBtn');
     const closeModal = document.getElementById('closeModal');
-    const closeDetailsModal = document.getElementById('closeDetailsModal');
     const cancelBtn = document.getElementById('cancelBtn');
+    const closeDetailsModal = document.getElementById('closeDetailsModal');
     const closeDetailsBtn = document.getElementById('closeDetailsBtn');
+    const editProjectBtn = document.getElementById('editProjectBtn');
+    const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const projectForm = document.getElementById('projectForm');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const mentorFilter = document.getElementById('mentorFilter');
+    const projectModal = document.getElementById('projectModal');
+    const detailsModal = document.getElementById('detailsModal');
 
+    // Add project buttons
     if (addProjectBtn) {
       addProjectBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('Add project button clicked');
         this.openAddProjectModal();
       });
     }
@@ -317,16 +339,17 @@ class UIController {
       });
     }
 
+    // Modal close buttons
     if (closeModal) {
       closeModal.addEventListener('click', () => this.closeModal());
     }
 
-    if (closeDetailsModal) {
-      closeDetailsModal.addEventListener('click', () => this.closeDetailsModal());
-    }
-
     if (cancelBtn) {
       cancelBtn.addEventListener('click', () => this.closeModal());
+    }
+
+    if (closeDetailsModal) {
+      closeDetailsModal.addEventListener('click', () => this.closeDetailsModal());
     }
 
     if (closeDetailsBtn) {
@@ -334,15 +357,11 @@ class UIController {
     }
 
     // Form submission
-    const projectForm = document.getElementById('projectForm');
     if (projectForm) {
       projectForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
     }
 
     // Project actions
-    const editProjectBtn = document.getElementById('editProjectBtn');
-    const deleteProjectBtn = document.getElementById('deleteProjectBtn');
-    
     if (editProjectBtn) {
       editProjectBtn.addEventListener('click', () => this.editCurrentProject());
     }
@@ -352,16 +371,11 @@ class UIController {
     }
 
     // Export functionality
-    const exportBtn = document.getElementById('exportBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => this.exportProjects());
     }
 
     // Search and filters
-    const searchInput = document.getElementById('searchInput');
-    const statusFilter = document.getElementById('statusFilter');
-    const mentorFilter = document.getElementById('mentorFilter');
-
     if (searchInput) {
       searchInput.addEventListener('input', (e) => this.handleSearch(e));
     }
@@ -374,23 +388,33 @@ class UIController {
       mentorFilter.addEventListener('change', (e) => this.handleMentorFilter(e));
     }
 
-    // Modal overlay clicks
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal__overlay')) {
-        this.closeModal();
-        this.closeDetailsModal();
-      }
-    });
+    // Modal overlay click to close
+    if (projectModal) {
+      projectModal.addEventListener('click', (e) => {
+        if (e.target === projectModal) {
+          this.closeModal();
+        }
+      });
+    }
 
-    // Keyboard shortcuts
+    if (detailsModal) {
+      detailsModal.addEventListener('click', (e) => {
+        if (e.target === detailsModal) {
+          this.closeDetailsModal();
+        }
+      });
+    }
+
+    // Keyboard support
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        this.closeModal();
-        this.closeDetailsModal();
+        if (projectModal && !projectModal.classList.contains('hidden')) {
+          this.closeModal();
+        } else if (detailsModal && !detailsModal.classList.contains('hidden')) {
+          this.closeDetailsModal();
+        }
       }
     });
-
-    console.log('Event listeners set up complete');
   }
 
   initializeDataListener() {
@@ -656,18 +680,36 @@ class UIController {
   }
 
   editCurrentProject() {
-    if (!this.currentProject) return;
+    if (!this.currentProject) {
+      console.error('No current project to edit');
+      return;
+    }
 
+    console.log('Editing project:', this.currentProject.title);
+    
+    // Set edit mode before closing details modal
     this.isEditMode = true;
+    
+    // Store the project reference before closing modal
+    const projectToEdit = this.currentProject;
+    
+    // Close details modal
     this.closeDetailsModal();
     
+    // Set the current project again (in case closeDetailsModal cleared it)
+    this.currentProject = projectToEdit;
+    
+    // Update modal UI
     const modalTitle = document.getElementById('modalTitle');
     const saveBtn = document.getElementById('saveBtn');
     
     if (modalTitle) modalTitle.textContent = 'Edit Project';
     if (saveBtn) saveBtn.textContent = 'Update Project';
     
+    // Populate form with project data
     this.populateForm(this.currentProject);
+    
+    // Show the edit modal
     this.showModal('projectModal');
   }
 
@@ -685,6 +727,13 @@ class UIController {
   }
 
   populateForm(project) {
+    if (!project) {
+      console.error('No project data to populate form');
+      return;
+    }
+    
+    console.log('Populating form with project:', project);
+    
     const elements = {
       projectTitle: project.title,
       projectDescription: project.description || '',
@@ -699,7 +748,12 @@ class UIController {
 
     Object.entries(elements).forEach(([id, value]) => {
       const element = document.getElementById(id);
-      if (element) element.value = value;
+      if (element) {
+        element.value = value;
+        console.log(`Set ${id} = ${value}`);
+      } else {
+        console.warn(`Element with id '${id}' not found`);
+      }
     });
   }
 
@@ -715,6 +769,9 @@ class UIController {
   async handleFormSubmit(e) {
     e.preventDefault();
     console.log('Form submitted');
+    
+    // Clear previous error states
+    this.clearFormErrors();
     
     const projectData = {
       title: this.getFormValue('projectTitle'),
@@ -732,29 +789,139 @@ class UIController {
         .split(',')
         .map(r => r.trim())
         .filter(r => r),
-      comments: []
+      comments: this.currentProject?.comments || []
     };
 
-    // Validation
-    if (!projectData.title || !projectData.mentor) {
-      alert('Please fill in required fields (Title and Mentor)');
+    // Enhanced validation
+    const validationErrors = this.validateProjectData(projectData);
+    if (validationErrors.length > 0) {
+      this.showValidationErrors(validationErrors);
       return;
+    }
+
+    // Show loading state
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn?.textContent;
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
     }
 
     try {
       if (this.isEditMode && this.currentProject) {
         await projectStore.updateProject(this.currentProject.id, projectData);
-        console.log('Project updated');
+        this.showSuccessMessage('Project updated successfully!');
       } else {
         await projectStore.addProject(projectData);
-        console.log('Project added');
+        this.showSuccessMessage('Project created successfully!');
       }
       
-      this.closeModal();
+      setTimeout(() => this.closeModal(), 1000);
     } catch (error) {
       console.error('Save error:', error);
-      alert('Failed to save project. Please try again.');
+      this.showErrorMessage('Failed to save project. Please try again.');
+    } finally {
+      // Reset button state
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
     }
+  }
+
+  validateProjectData(data) {
+    const errors = [];
+
+    // Required fields
+    if (!data.title) {
+      errors.push({ field: 'projectTitle', message: 'Project title is required' });
+    }
+    if (!data.mentor) {
+      errors.push({ field: 'projectMentor', message: 'Mentor is required' });
+    }
+
+    // Progress validation
+    if (data.progress < 0 || data.progress > 100) {
+      errors.push({ field: 'projectProgress', message: 'Progress must be between 0 and 100' });
+    }
+
+    // Date validation
+    if (data.startDate && data.dueDate) {
+      const startDate = new Date(data.startDate);
+      const dueDate = new Date(data.dueDate);
+      if (startDate > dueDate) {
+        errors.push({ field: 'dueDate', message: 'Due date cannot be before start date' });
+      }
+    }
+
+    // URL validation for resources
+    if (data.resources.length > 0) {
+      const invalidUrls = data.resources.filter(url => {
+        if (!url) return false;
+        try {
+          new URL(url);
+          return false;
+        } catch {
+          return true;
+        }
+      });
+      if (invalidUrls.length > 0) {
+        errors.push({ field: 'projectResources', message: 'Please enter valid URLs for resources' });
+      }
+    }
+
+    // Title length validation
+    if (data.title && data.title.length > 100) {
+      errors.push({ field: 'projectTitle', message: 'Title must be less than 100 characters' });
+    }
+
+    return errors;
+  }
+
+  clearFormErrors() {
+    document.querySelectorAll('.form-error').forEach(error => error.remove());
+    document.querySelectorAll('.form-control.error').forEach(input => {
+      input.classList.remove('error');
+    });
+  }
+
+  showValidationErrors(errors) {
+    errors.forEach(error => {
+      const field = document.getElementById(error.field);
+      if (field) {
+        field.classList.add('error');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'form-error';
+        errorDiv.textContent = error.message;
+        field.parentNode.appendChild(errorDiv);
+      }
+    });
+  }
+
+  showSuccessMessage(message) {
+    this.showNotification(message, 'success');
+  }
+
+  showErrorMessage(message) {
+    this.showNotification(message, 'error');
+  }
+
+  showNotification(message, type = 'info') {
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification--${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
   }
 
   getFormValue(id) {
@@ -791,6 +958,7 @@ class UIController {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
       this.resetForm();
+      this.resetModalState();
     }
   }
 
@@ -799,8 +967,30 @@ class UIController {
     if (modal) {
       modal.classList.add('hidden');
       document.body.style.overflow = '';
-      this.currentProject = null;
+      
+      // Only clear currentProject if we're not going into edit mode
+      if (!this.isEditMode) {
+        this.currentProject = null;
+      }
     }
+  }
+
+  resetModalState() {
+    this.isEditMode = false;
+    this.currentProject = null;
+    
+    // Reset modal title and button text
+    const modalTitle = document.getElementById('modalTitle');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    if (modalTitle) modalTitle.textContent = 'Add New Project';
+    if (saveBtn) {
+      saveBtn.textContent = 'Save Project';
+      saveBtn.disabled = false;
+    }
+    
+    // Clear any error states
+    this.clearFormErrors();
   }
 
   exportProjects() {
