@@ -1,23 +1,13 @@
-// Firebase Configuration - loaded from external file
-// See firebase-config.example.js for setup instructions
-let firebaseConfig;
-
-// Check if config is loaded
-if (typeof window.firebaseConfig !== 'undefined') {
-  firebaseConfig = window.firebaseConfig;
-} else {
-  // Fallback for development - replace with your config
-  console.warn('Firebase config not found. Please create firebase-config.js from firebase-config.example.js');
-  firebaseConfig = {
-    apiKey: "your-api-key-here",
-    authDomain: "your-project.firebaseapp.com",
-    databaseURL: "https://your-project-default-rtdb.region.firebasedatabase.app",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "your-sender-id",
-    appId: "your-app-id"
-  };
-}
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBO4MrF8lyQn8Z291h2i6xvsG991TPzP08",
+  authDomain: "pdc-dashboard-8963a.firebaseapp.com",
+  databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pdc-dashboard-8963a",
+  storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
+  messagingSenderId: "340274488388",
+  appId: "1:340274488388:web:ca56cabacd68e0521d0811"
+};
 
 // Initialize Firebase with error handling
 let database;
