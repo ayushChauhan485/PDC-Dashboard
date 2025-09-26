@@ -307,6 +307,8 @@ class UIController {
     const editProjectBtn = document.getElementById('editProjectBtn');
     const deleteProjectBtn = document.getElementById('deleteProjectBtn');
     const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFileInput = document.getElementById('importFileInput');
     const projectForm = document.getElementById('projectForm');
     const searchInput = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
@@ -363,6 +365,19 @@ class UIController {
     // Export functionality
     if (exportBtn) {
       exportBtn.addEventListener('click', () => this.exportProjects());
+    }
+
+    // Import functionality
+    if (importBtn && importFileInput) {
+      importBtn.addEventListener('click', () => {
+        importFileInput.click();
+      });
+
+      importFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          this.handleImport(e.target.files);
+        }
+      });
     }
 
     // Search and filters
@@ -454,11 +469,26 @@ class UIController {
 
   createProjectCard(project) {
     const isOverdue = project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'Completed';
-    const assigneesList = project.assignees?.map(assignee => 
-      `<span class="assignee-tag">${assignee}</span>`
-    ).join('') || '';
-
     const statusClass = this.getStatusClass(project.status);
+
+    // Ensure consistent assignees display
+    const assigneesList = project.assignees?.length 
+      ? project.assignees.map(assignee => `<span class="assignee-tag">${assignee}</span>`).join('')
+      : '<span class="assignee-tag assignee-tag--placeholder">No assignees</span>';
+
+    // Ensure consistent description display
+    const description = project.description?.trim() 
+      ? project.description 
+      : 'No description available';
+
+    // Ensure consistent date display
+    const startDateDisplay = project.startDate 
+      ? `Started: ${new Date(project.startDate).toLocaleDateString()}`
+      : 'Start date: Not set';
+    
+    const dueDateDisplay = project.dueDate 
+      ? `Due: ${new Date(project.dueDate).toLocaleDateString()}`
+      : 'Due date: Not set';
 
     return `
       <div class="project-card" data-project-id="${project.id}">
@@ -471,14 +501,12 @@ class UIController {
         </div>
         
         <div class="project-card__body">
-          ${project.description ? `<p class="project-card__description">${project.description}</p>` : ''}
+          <p class="project-card__description">${description}</p>
           
-          ${project.assignees?.length ? `
-            <div class="project-card__assignees">
-              <div class="project-card__assignees-title">Assignees</div>
-              <div class="assignee-list">${assigneesList}</div>
-            </div>
-          ` : ''}
+          <div class="project-card__assignees">
+            <div class="project-card__assignees-title">Assignees</div>
+            <div class="assignee-list">${assigneesList}</div>
+          </div>
           
           <div class="project-card__progress">
             <div class="progress-label">
@@ -493,10 +521,10 @@ class UIController {
         
         <div class="project-card__footer">
           <div class="project-card__dates">
-            ${project.startDate ? `Started: ${new Date(project.startDate).toLocaleDateString()}` : ''}
-            ${project.dueDate ? `<br>Due: ${new Date(project.dueDate).toLocaleDateString()}` : ''}
-            ${isOverdue ? '<br><span class="status status--error">Overdue</span>' : ''}
+            <div class="date-item">${startDateDisplay}</div>
+            <div class="date-item">${dueDateDisplay}</div>
           </div>
+          ${isOverdue ? '<div class="overdue-indicator"><span class="status status--error">Overdue</span></div>' : ''}
         </div>
       </div>
     `;
@@ -604,8 +632,17 @@ class UIController {
     ).join('') || 'No resources added';
 
     const assignees = project.assignees?.join(', ') || 'No assignees';
-    const comments = project.comments?.map(comment => 
-      `<div class="comment">${comment}</div>`
+    const comments = project.comments?.map((comment, index) => 
+      `<div class="comment">
+        <div class="comment-content">${comment}</div>
+        <button type="button" class="comment-delete" data-comment-index="${index}" 
+                title="Delete comment" aria-label="Delete comment">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"></polyline>
+            <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"></path>
+          </svg>
+        </button>
+      </div>`
     ).join('') || '<div class="comment">No comments yet</div>';
 
     detailsContainer.innerHTML = `
@@ -661,12 +698,46 @@ class UIController {
       
       <div class="comments-section">
         <div class="project-detail__label">Comments</div>
-        ${comments}
+        <div class="comments-list">
+          ${comments}
+        </div>
+        <div class="add-comment">
+          <textarea id="newCommentInput" class="form-control comment-input" 
+                    placeholder="Add a comment..." rows="2"></textarea>
+          <button type="button" class="btn btn--primary comment-btn" id="addCommentBtn">
+            Add Comment
+          </button>
+        </div>
       </div>
     `;
 
     const detailsTitle = document.getElementById('detailsTitle');
     if (detailsTitle) detailsTitle.textContent = project.title;
+
+    // Add event listener for the comment button
+    const addCommentBtn = document.getElementById('addCommentBtn');
+    if (addCommentBtn) {
+      console.log('Adding comment button event listener');
+      addCommentBtn.addEventListener('click', () => {
+        console.log('Comment button clicked');
+        this.addComment();
+      });
+    } else {
+      console.error('addCommentBtn not found');
+    }
+
+    // Add event listeners for comment delete buttons
+    const deleteButtons = document.querySelectorAll('.comment-delete');
+    console.log('Found delete buttons:', deleteButtons.length);
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const commentIndex = parseInt(button.getAttribute('data-comment-index'));
+        console.log('Delete button clicked for comment index:', commentIndex);
+        this.deleteComment(commentIndex);
+      });
+    });
   }
 
   editCurrentProject() {
@@ -714,6 +785,164 @@ class UIController {
         alert('Failed to delete project. Please try again.');
       }
     }
+  }
+
+  async addComment() {
+    console.log('addComment called');
+    if (!this.currentProject) {
+      console.error('No current project to add comment to');
+      return;
+    }
+
+    const commentInput = document.getElementById('newCommentInput');
+    if (!commentInput) {
+      console.error('Comment input not found');
+      return;
+    }
+
+    const commentText = commentInput.value.trim();
+    console.log('Comment text:', commentText);
+    if (!commentText) {
+      this.showErrorMessage('Please enter a comment before adding.');
+      commentInput.focus();
+      return;
+    }
+
+    // Show loading state
+    const addBtn = document.getElementById('addCommentBtn');
+    const originalText = addBtn?.textContent;
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.textContent = 'Adding...';
+    }
+
+    try {
+      // Create new comment with timestamp
+      const newComment = `${new Date().toLocaleString()}: ${commentText}`;
+      console.log('New comment:', newComment);
+      
+      // Add to current project's comments
+      if (!this.currentProject.comments) {
+        this.currentProject.comments = [];
+      }
+      this.currentProject.comments.push(newComment);
+      console.log('Updated comments:', this.currentProject.comments);
+
+      // Update project in storage - pass the entire updated project
+      await projectStore.updateProject(this.currentProject.id, this.currentProject);
+      console.log('Project updated in storage');
+
+      // Clear input
+      commentInput.value = '';
+
+      // Update just the comments section instead of the entire modal
+      this.refreshCommentsSection(this.currentProject);
+      console.log('Comments section refreshed');
+
+      // Show success message
+      this.showSuccessMessage('Comment added successfully!');
+      console.log('Comment added successfully');
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      this.showErrorMessage(`Failed to add comment: ${error.message || 'Please try again.'}`);
+      
+      // Revert the comment addition since it failed
+      if (this.currentProject.comments && this.currentProject.comments.length > 0) {
+        this.currentProject.comments.pop();
+      }
+    } finally {
+      // Restore button state
+      if (addBtn) {
+        addBtn.disabled = false;
+        addBtn.textContent = originalText;
+      }
+    }
+  }
+
+  async deleteComment(commentIndex) {
+    console.log('deleteComment called with index:', commentIndex);
+    
+    if (!this.currentProject || !this.currentProject.comments) {
+      console.error('No current project or comments to delete');
+      return;
+    }
+
+    if (commentIndex < 0 || commentIndex >= this.currentProject.comments.length) {
+      console.error('Invalid comment index:', commentIndex);
+      return;
+    }
+
+    const commentToDelete = this.currentProject.comments[commentIndex];
+    if (!confirm(`Are you sure you want to delete this comment?\n\n"${commentToDelete}"`)) {
+      return;
+    }
+
+    try {
+      // Remove comment from array
+      this.currentProject.comments.splice(commentIndex, 1);
+      console.log('Comment removed from array. Remaining comments:', this.currentProject.comments);
+
+      // Update project in storage
+      await projectStore.updateProject(this.currentProject.id, this.currentProject);
+      console.log('Project updated in storage after comment deletion');
+
+      // Update just the comments section instead of the entire modal
+      this.refreshCommentsSection(this.currentProject);
+      console.log('Comments section refreshed after comment deletion');
+
+      // Show success message
+      this.showSuccessMessage('Comment deleted successfully!');
+      console.log('Comment deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      this.showErrorMessage(`Failed to delete comment: ${error.message || 'Please try again.'}`);
+      
+      // Revert the comment deletion since it failed  
+      this.currentProject.comments.splice(commentIndex, 0, commentToDelete);
+    }
+  }
+
+  refreshCommentsSection(project) {
+    console.log('Refreshing comments section for project:', project.title);
+    
+    // Find the comments list container
+    const commentsListContainer = document.querySelector('.comments-list');
+    if (!commentsListContainer) {
+      console.error('Comments list container not found');
+      return;
+    }
+
+    // Generate updated comments HTML
+    const comments = project.comments?.map((comment, index) => 
+      `<div class="comment">
+        <div class="comment-content">${comment}</div>
+        <button type="button" class="comment-delete" data-comment-index="${index}" 
+                title="Delete comment" aria-label="Delete comment">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3,6 5,6 21,6"></polyline>
+            <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2,2h4a2,2 0 0,1,2,2v2"></path>
+          </svg>
+        </button>
+      </div>`
+    ).join('') || '<div class="comment">No comments yet</div>';
+
+    // Update the comments list HTML
+    commentsListContainer.innerHTML = comments;
+
+    // Re-attach event listeners to new delete buttons
+    const deleteButtons = commentsListContainer.querySelectorAll('.comment-delete');
+    console.log('Re-attaching listeners to', deleteButtons.length, 'delete buttons');
+    deleteButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const commentIndex = parseInt(button.getAttribute('data-comment-index'));
+        console.log('Delete button clicked for comment index:', commentIndex);
+        this.deleteComment(commentIndex);
+      });
+    });
+
+    console.log('Comments section refreshed successfully');
   }
 
   populateForm(project) {
@@ -1014,6 +1243,236 @@ class UIController {
     return [headers, ...rows]
       .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
       .join('\n');
+  }
+
+  async handleImport(files) {
+    console.log('Starting import process with', files.length, 'files');
+    
+    if (files.length === 0) {
+      this.showErrorMessage('No files selected for import.');
+      return;
+    }
+
+    let totalImported = 0;
+    let totalErrors = 0;
+
+    this.showSuccessMessage('Processing import files...');
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      console.log('Processing file:', file.name, 'Type:', file.type);
+
+      try {
+        const projects = await this.parseImportFile(file);
+        console.log('Parsed projects from', file.name, ':', projects.length);
+
+        if (projects.length > 0) {
+          const imported = await this.importProjects(projects, file.name);
+          totalImported += imported;
+        } else {
+          console.warn('No valid projects found in', file.name);
+          totalErrors++;
+        }
+      } catch (error) {
+        console.error('Error processing file', file.name, ':', error);
+        totalErrors++;
+      }
+    }
+
+    // Reset file input
+    const importFileInput = document.getElementById('importFileInput');
+    if (importFileInput) importFileInput.value = '';
+
+    // Show results
+    if (totalImported > 0) {
+      this.showSuccessMessage(`Successfully imported ${totalImported} projects!`);
+    }
+    if (totalErrors > 0) {
+      this.showErrorMessage(`${totalErrors} files had errors during import.`);
+    }
+
+    console.log('Import process completed. Imported:', totalImported, 'Errors:', totalErrors);
+  }
+
+  async parseImportFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = e.target.result;
+          let workbook;
+
+          if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+            // Parse CSV
+            workbook = XLSX.read(data, { type: 'string' });
+          } else {
+            // Parse Excel (xlsx, xls)
+            workbook = XLSX.read(data, { type: 'array' });
+          }
+
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          const projects = this.convertImportDataToProjects(jsonData);
+          resolve(projects);
+        } catch (error) {
+          console.error('Error parsing file:', error);
+          reject(error);
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        reader.readAsText(file);
+      } else {
+        reader.readAsArrayBuffer(file);
+      }
+    });
+  }
+
+  convertImportDataToProjects(data) {
+    console.log('Converting import data to projects:', data);
+    
+    if (data.length === 0) return [];
+
+    // Get headers (first row)
+    const headers = data[0].map(h => String(h || '').toLowerCase().trim());
+    console.log('Headers found:', headers);
+
+    // Map common column names to our fields
+    const fieldMap = {
+      'title': ['title', 'project title', 'name', 'project name'],
+      'description': ['description', 'desc', 'details', 'project description'],
+      'mentor': ['mentor', 'supervisor', 'guide', 'lead'],
+      'assignees': ['assignees', 'assigned to', 'team', 'members', 'assignee'],
+      'status': ['status', 'state', 'phase'],
+      'progress': ['progress', 'completion', '%', 'percent', 'progress%'],
+      'startDate': ['start date', 'startdate', 'start', 'begin date'],
+      'dueDate': ['due date', 'duedate', 'due', 'end date', 'deadline']
+    };
+
+    // Find column indices for each field
+    const columnIndices = {};
+    Object.keys(fieldMap).forEach(field => {
+      const possibleNames = fieldMap[field];
+      const index = headers.findIndex(header => 
+        possibleNames.some(name => header.includes(name))
+      );
+      if (index !== -1) {
+        columnIndices[field] = index;
+        console.log(`Mapped ${field} to column ${index} (${headers[index]})`);
+      }
+    });
+
+    // Convert data rows to projects
+    const projects = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      if (!row || row.length === 0) continue;
+
+      // Check if row has any data
+      if (row.every(cell => !cell || String(cell).trim() === '')) continue;
+
+      const project = {
+        title: this.getFieldValue(row, columnIndices.title) || `Imported Project ${i}`,
+        description: this.getFieldValue(row, columnIndices.description) || '',
+        mentor: this.getFieldValue(row, columnIndices.mentor) || '',
+        assignees: this.parseAssignees(this.getFieldValue(row, columnIndices.assignees)),
+        status: this.normalizeStatus(this.getFieldValue(row, columnIndices.status)),
+        progress: this.parseProgress(this.getFieldValue(row, columnIndices.progress)),
+        startDate: this.parseDate(this.getFieldValue(row, columnIndices.startDate)),
+        dueDate: this.parseDate(this.getFieldValue(row, columnIndices.dueDate)),
+        resources: [],
+        comments: []
+      };
+
+      projects.push(project);
+      console.log('Created project:', project.title);
+    }
+
+    return projects;
+  }
+
+  getFieldValue(row, columnIndex) {
+    if (columnIndex === undefined || columnIndex < 0 || columnIndex >= row.length) {
+      return '';
+    }
+    const value = row[columnIndex];
+    return value ? String(value).trim() : '';
+  }
+
+  parseAssignees(assigneeString) {
+    if (!assigneeString) return [];
+    return assigneeString
+      .split(/[,;]/)
+      .map(a => a.trim())
+      .filter(a => a.length > 0);
+  }
+
+  normalizeStatus(status) {
+    if (!status) return 'Planning';
+    
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('progress') || statusLower.includes('active') || statusLower.includes('ongoing')) {
+      return 'In Progress';
+    } else if (statusLower.includes('complete') || statusLower.includes('done') || statusLower.includes('finished')) {
+      return 'Completed';
+    } else if (statusLower.includes('review') || statusLower.includes('testing')) {
+      return 'Review';
+    } else if (statusLower.includes('plan') || statusLower.includes('start') || statusLower.includes('new')) {
+      return 'Planning';
+    }
+    
+    return status; // Return original if no match
+  }
+
+  parseProgress(progressString) {
+    if (!progressString) return 0;
+    
+    const numStr = String(progressString).replace(/[^\d.]/g, '');
+    const num = parseFloat(numStr);
+    
+    if (isNaN(num)) return 0;
+    
+    // If number is > 1, assume it's percentage, otherwise fraction
+    return num > 1 ? Math.min(num, 100) : Math.min(num * 100, 100);
+  }
+
+  parseDate(dateString) {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+      }
+    } catch (error) {
+      console.warn('Invalid date format:', dateString);
+    }
+    
+    return '';
+  }
+
+  async importProjects(projects, fileName) {
+    console.log('Importing', projects.length, 'projects from', fileName);
+    
+    let successCount = 0;
+    
+    for (const projectData of projects) {
+      try {
+        await projectStore.addProject(projectData);
+        successCount++;
+        console.log('Successfully imported project:', projectData.title);
+      } catch (error) {
+        console.error('Failed to import project:', projectData.title, error);
+      }
+    }
+    
+    console.log(`Import completed for ${fileName}. Success: ${successCount}/${projects.length}`);
+    return successCount;
   }
 }
 

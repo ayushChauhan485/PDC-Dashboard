@@ -901,6 +901,9 @@ select.form-control {
   overflow: hidden;
   transition: all var(--duration-normal) var(--ease-standard);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  min-height: 380px; /* Minimum height for consistency */
 }
 
 .project-card:hover {
@@ -918,7 +921,14 @@ select.form-control {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text);
   margin: 0 0 var(--space-8) 0;
-  line-height: var(--line-height-tight);
+  line-height: 1.3;
+  height: 2.6em; /* Fixed height for exactly 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-card__meta {
@@ -936,22 +946,29 @@ select.form-control {
 
 .project-card__body {
   padding: var(--space-20);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .project-card__description {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
+  line-height: 1.4;
   margin-bottom: var(--space-16);
+  min-height: 60px; /* Minimum height for consistency */
+  max-height: 60px; /* Maximum height to prevent overflow */
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .project-card__assignees {
   margin-bottom: var(--space-16);
+  min-height: 48px; /* Minimum height for consistency */
 }
 
 .project-card__assignees-title {
@@ -967,6 +984,9 @@ select.form-control {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-6);
+  min-height: 1.8em; /* Ensure minimum height even for single row */
+  max-height: 3.6em; /* Limit to roughly 2 rows */
+  overflow: hidden;
 }
 
 .assignee-tag {
@@ -976,6 +996,12 @@ select.form-control {
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+}
+
+.assignee-tag--placeholder {
+  background: var(--color-bg-2);
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .project-card__progress {
@@ -1014,6 +1040,20 @@ select.form-control {
 .project-card__dates {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+.date-item {
+  margin-bottom: var(--space-4);
+  line-height: 1.4;
+}
+
+.date-item:last-child {
+  margin-bottom: 0;
+}
+
+.overdue-indicator {
+  display: flex;
+  align-items: center;
 }
 
 /* Loading and Empty States */
@@ -1214,6 +1254,66 @@ select.form-control {
   margin-bottom: var(--space-12);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+
+.comment-content {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.comment-delete {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.comment-delete:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.comment-delete:focus {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
+}
+
+.comments-list {
+  margin-bottom: var(--space-16);
+}
+
+.add-comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  background: var(--color-bg-5);
+  padding: var(--space-16);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.comment-input {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.comment-btn {
+  align-self: flex-end;
+  min-width: 120px;
 }
 
 /* Responsive Design */
