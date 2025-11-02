@@ -1,16 +1,6 @@
-// Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBO4MrF8lyQn8Z291h2i6xvsG991TPzP08",
-  authDomain: "pdc-dashboard-8963a.firebaseapp.com",
-  databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "pdc-dashboard-8963a",
-  storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
-  messagingSenderId: "340274488388",
-  appId: "1:340274488388:web:ca56cabacd68e0521d0811"
-};
-
 // Initialize Firebase with error handling
 let database;
+let auth;
 let isFirebaseInitialized = false;
 
 function initializeFirebase() {
@@ -20,8 +10,14 @@ function initializeFirebase() {
       return false;
     }
     
-    firebase.initializeApp(firebaseConfig);
+    if (typeof window.firebaseConfig === 'undefined') {
+      console.error('Firebase configuration not loaded. Make sure firebase-config.js is included.');
+      return false;
+    }
+    
+    firebase.initializeApp(window.firebaseConfig);
     database = firebase.database();
+    auth = firebase.auth();
     isFirebaseInitialized = true;
     console.log('Firebase initialized successfully');
     return true;
@@ -266,6 +262,101 @@ class FirebaseProjectStore {
 // Initialize store
 const projectStore = new FirebaseProjectStore();
 
+// Authentication Manager
+class AuthManager {
+  constructor() {
+    this.currentUser = null;
+    this.setupAuthStateListener();
+  }
+
+  setupAuthStateListener() {
+    auth.onAuthStateChanged((user) => {
+      this.currentUser = user;
+      this.updateUIForAuthState(user);
+    });
+  }
+
+  updateUIForAuthState(user) {
+    const authButtons = document.getElementById('authButtons');
+    const profileSection = document.getElementById('profileSection');
+    const userDisplayName = document.getElementById('userDisplayName');
+    const addProjectBtn = document.getElementById('addProjectBtn');
+
+    if (user) {
+      // User is logged in
+      authButtons.style.display = 'none';
+      profileSection.style.display = 'flex';
+      userDisplayName.textContent = user.displayName || user.email;
+      if (addProjectBtn) addProjectBtn.style.display = 'block';
+    } else {
+      // User is logged out
+      authButtons.style.display = 'flex';
+      profileSection.style.display = 'none';
+      if (addProjectBtn) addProjectBtn.style.display = 'none';
+    }
+  }
+
+  async register(email, password, displayName) {
+    console.log('AuthManager.register called with:', email, displayName);
+    try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      console.log('User created successfully:', userCredential.user.uid);
+      
+      // Update profile with display name
+      if (displayName) {
+        await userCredential.user.updateProfile({
+          displayName: displayName
+        });
+        console.log('Display name updated to:', displayName);
+      }
+      
+      return { success: true, user: userCredential.user };
+    } catch (error) {
+      console.error('Registration error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async login(email, password) {
+    console.log('AuthManager.login called with:', email);
+    try {
+      if (!auth) {
+        throw new Error('Firebase Auth not initialized');
+      }
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      console.log('Login successful:', userCredential.user.uid);
+      return { success: true, user: userCredential.user };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async logout() {
+    try {
+      await auth.signOut();
+      return { success: true };
+    } catch (error) {
+      console.error('Logout error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  isAuthenticated() {
+    return this.currentUser !== null;
+  }
+
+  getCurrentUser() {
+    return this.currentUser;
+  }
+}
+
+// Initialize auth manager
+const authManager = new AuthManager();
+
 // UI State Management
 class UIController {
   constructor() {
@@ -274,6 +365,7 @@ class UIController {
     this.searchTerm = '';
     this.statusFilter = '';
     this.mentorFilter = '';
+    this.isRegisterMode = false;
     
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
@@ -420,6 +512,137 @@ class UIController {
         }
       }
     });
+
+    // Authentication event listeners
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const authForm = document.getElementById('authForm');
+    const authModal = document.getElementById('authModal');
+    const closeAuthModal = document.getElementById('closeAuthModal');
+    const cancelAuthBtn = document.getElementById('cancelAuthBtn');
+    const toggleAuthMode = document.getElementById('toggleAuthMode');
+    const authTitle = document.getElementById('authTitle');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const displayNameGroup = document.getElementById('displayNameGroup');
+    const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+    const profileMenuButton = document.getElementById('profileBtn');
+    const profileMenu = document.getElementById('profileMenu');
+
+    // Login button
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        this.isRegisterMode = false;
+        this.updateAuthModal(false);
+        authModal.classList.remove('hidden');
+      });
+    }
+
+    // Register button
+    if (registerBtn) {
+      registerBtn.addEventListener('click', () => {
+        this.isRegisterMode = true;
+        this.updateAuthModal(true);
+        authModal.classList.remove('hidden');
+      });
+    }
+
+    // Toggle between login and register
+    if (toggleAuthMode) {
+      toggleAuthMode.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.isRegisterMode = !this.isRegisterMode;
+        this.updateAuthModal(this.isRegisterMode);
+      });
+    }
+
+    // Close auth modal
+    if (closeAuthModal) {
+      closeAuthModal.addEventListener('click', () => {
+        authModal.classList.add('hidden');
+        authForm.reset();
+      });
+    }
+
+    if (cancelAuthBtn) {
+      cancelAuthBtn.addEventListener('click', () => {
+        authModal.classList.add('hidden');
+        authForm.reset();
+      });
+    }
+
+    // Auth modal overlay click to close
+    if (authModal) {
+      authModal.addEventListener('click', (e) => {
+        if (e.target === authModal) {
+          authModal.classList.add('hidden');
+          authForm.reset();
+        }
+      });
+    }
+
+    // Auth form submission
+    if (authForm) {
+      authForm.addEventListener('submit', async (e) => {
+        console.log('Auth form submitted, isRegisterMode:', this.isRegisterMode);
+        e.preventDefault();
+        await this.handleAuthSubmit(e);
+      });
+    } else {
+      console.error('Auth form not found!');
+    }
+
+    // Auth submit button click handler (backup in case form submit doesn't fire)
+    if (authSubmitBtn) {
+      authSubmitBtn.addEventListener('click', async (e) => {
+        console.log('Auth submit button clicked');
+        e.preventDefault();
+        if (authForm) {
+          const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+          authForm.dispatchEvent(submitEvent);
+        }
+      });
+    } else {
+      console.error('Auth submit button not found!');
+    }
+
+    // Logout button
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        const result = await authManager.logout();
+        if (result.success) {
+          profileMenu.classList.remove('active');
+          this.showSuccessMessage('Logged out successfully');
+        } else {
+          this.showErrorMessage('Failed to logout: ' + result.error);
+        }
+      });
+    }
+
+    // Profile menu toggle
+    if (profileMenuButton && profileMenu) {
+      profileMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Profile button clicked');
+        // Remove hidden class first if it exists
+        profileMenu.classList.remove('hidden');
+        // Then toggle active
+        profileMenu.classList.toggle('active');
+        console.log('Profile menu classes:', profileMenu.className);
+      });
+
+      // Close profile menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!profileMenu.contains(e.target) && !profileMenuButton.contains(e.target)) {
+          profileMenu.classList.remove('active');
+        }
+      });
+    } else {
+      console.error('Profile menu elements not found:', {
+        button: !!profileMenuButton,
+        menu: !!profileMenu
+      });
+    }
   }
 
   initializeDataListener() {
@@ -777,6 +1000,12 @@ class UIController {
   async deleteCurrentProject() {
     if (!this.currentProject) return;
 
+    // Check authentication
+    if (!authManager.isAuthenticated()) {
+      this.showErrorMessage('You must be logged in to delete projects');
+      return;
+    }
+
     if (confirm(`Are you sure you want to delete "${this.currentProject.title}"? This action cannot be undone.`)) {
       try {
         await projectStore.deleteProject(this.currentProject.id);
@@ -791,6 +1020,12 @@ class UIController {
     console.log('addComment called');
     if (!this.currentProject) {
       console.error('No current project to add comment to');
+      return;
+    }
+
+    // Check authentication
+    if (!authManager.isAuthenticated()) {
+      this.showErrorMessage('You must be logged in to add comments');
       return;
     }
 
@@ -817,8 +1052,19 @@ class UIController {
     }
 
     try {
-      // Create new comment with timestamp
-      const newComment = `${new Date().toLocaleString()}: ${commentText}`;
+      // Get current user information
+      const user = authManager.getCurrentUser();
+      const userName = user?.displayName || user?.email || 'Anonymous';
+      const userId = user?.uid || null;
+      
+      // Create new comment object with user info and timestamp
+      const newComment = {
+        text: commentText,
+        userName: userName,
+        userId: userId,
+        timestamp: new Date().toISOString(),
+        createdAt: new Date().toLocaleString()
+      };
       console.log('New comment:', newComment);
       
       // Add to current project's comments
@@ -862,6 +1108,12 @@ class UIController {
   async deleteComment(commentIndex) {
     console.log('deleteComment called with index:', commentIndex);
     
+    // Check authentication
+    if (!authManager.isAuthenticated()) {
+      this.showErrorMessage('You must be logged in to delete comments');
+      return;
+    }
+    
     if (!this.currentProject || !this.currentProject.comments) {
       console.error('No current project or comments to delete');
       return;
@@ -873,7 +1125,23 @@ class UIController {
     }
 
     const commentToDelete = this.currentProject.comments[commentIndex];
-    if (!confirm(`Are you sure you want to delete this comment?\n\n"${commentToDelete}"`)) {
+    
+    // Check permissions: user must be the comment author or admin
+    const currentUser = authManager.getCurrentUser();
+    const currentUserId = currentUser?.uid;
+    const commentUserId = typeof commentToDelete === 'object' ? commentToDelete.userId : null;
+    
+    // Admin check using configured admin emails
+    const isAdmin = window.adminEmails && window.adminEmails.includes(currentUser?.email);
+    
+    if (!isAdmin && currentUserId !== commentUserId) {
+      this.showErrorMessage('You can only delete your own comments');
+      return;
+    }
+    
+    // Get comment text for confirmation
+    const commentText = typeof commentToDelete === 'string' ? commentToDelete : commentToDelete.text;
+    if (!confirm(`Are you sure you want to delete this comment?\n\n"${commentText}"`)) {
       return;
     }
 
@@ -912,19 +1180,49 @@ class UIController {
       return;
     }
 
+    const currentUser = authManager.getCurrentUser();
+    const currentUserId = currentUser?.uid;
+
     // Generate updated comments HTML
-    const comments = project.comments?.map((comment, index) => 
-      `<div class="comment">
-        <div class="comment-content">${comment}</div>
-        <button type="button" class="comment-delete" data-comment-index="${index}" 
+    const comments = project.comments?.map((comment, index) => {
+      // Handle both old string format and new object format
+      let commentText, userName, userId, createdAt;
+      
+      if (typeof comment === 'string') {
+        // Old format: "timestamp: text"
+        commentText = comment;
+        userName = 'Legacy User';
+        userId = null;
+        createdAt = '';
+      } else {
+        // New format: object with user info
+        commentText = comment.text;
+        userName = comment.userName || 'Anonymous';
+        userId = comment.userId;
+        createdAt = comment.createdAt || '';
+      }
+
+      // Check if current user can delete this comment
+      const isAdmin = window.adminEmails && window.adminEmails.includes(currentUser?.email);
+      const canDelete = currentUserId && (currentUserId === userId || isAdmin);
+      const deleteButton = canDelete ? 
+        `<button type="button" class="comment-delete" data-comment-index="${index}" 
                 title="Delete comment" aria-label="Delete comment">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3,6 5,6 21,6"></polyline>
             <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2,2h4a2,2 0 0,1,2,2v2"></path>
           </svg>
-        </button>
-      </div>`
-    ).join('') || '<div class="comment">No comments yet</div>';
+        </button>` : '';
+
+      return `<div class="comment">
+        <div class="comment-header">
+          <span class="comment-author">${userName}</span>
+          <span class="comment-time">${createdAt}</span>
+        </div>
+        <div class="comment-content">${commentText}</div>
+        ${deleteButton}
+      </div>`;
+    }).join('') || '<div class="comment">No comments yet</div>';
 
     // Update the comments list HTML
     commentsListContainer.innerHTML = comments;
@@ -988,6 +1286,12 @@ class UIController {
   async handleFormSubmit(e) {
     e.preventDefault();
     console.log('Form submitted');
+    
+    // Check authentication
+    if (!authManager.isAuthenticated()) {
+      this.showErrorMessage('You must be logged in to create or edit projects');
+      return;
+    }
     
     // Clear previous error states
     this.clearFormErrors();
@@ -1194,6 +1498,71 @@ class UIController {
     }
   }
 
+  updateAuthModal(isRegister) {
+    const authTitle = document.getElementById('authTitle');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const displayNameGroup = document.getElementById('displayNameGroup');
+    const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+    const toggleAuthMode = document.getElementById('toggleAuthMode');
+
+    if (isRegister) {
+      authTitle.textContent = 'Create Account';
+      authSubmitBtn.textContent = 'Register';
+      displayNameGroup.style.display = 'block';
+      confirmPasswordGroup.style.display = 'block';
+      toggleAuthMode.innerHTML = 'Already have an account? <span class="btn-link">Login</span>';
+    } else {
+      authTitle.textContent = 'Login';
+      authSubmitBtn.textContent = 'Login';
+      displayNameGroup.style.display = 'none';
+      confirmPasswordGroup.style.display = 'none';
+      toggleAuthMode.innerHTML = 'Don\'t have an account? <span class="btn-link">Register</span>';
+    }
+  }
+
+  async handleAuthSubmit(e) {
+    console.log('handleAuthSubmit called, isRegisterMode:', this.isRegisterMode);
+    e.preventDefault();
+    
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const authModal = document.getElementById('authModal');
+    const authForm = document.getElementById('authForm');
+
+    console.log('Email:', email, 'Password length:', password.length);
+
+    if (this.isRegisterMode) {
+      const displayName = document.getElementById('authDisplayName').value;
+      const confirmPassword = document.getElementById('authConfirmPassword').value;
+
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        this.showErrorMessage('Passwords do not match');
+        return;
+      }
+
+      // Register user
+      const result = await authManager.register(email, password, displayName);
+      if (result.success) {
+        authModal.classList.add('hidden');
+        authForm.reset();
+        this.showSuccessMessage('Account created successfully! Welcome, ' + displayName);
+      } else {
+        this.showErrorMessage('Registration failed: ' + result.error);
+      }
+    } else {
+      // Login user
+      const result = await authManager.login(email, password);
+      if (result.success) {
+        authModal.classList.add('hidden');
+        authForm.reset();
+        this.showSuccessMessage('Logged in successfully!');
+      } else {
+        this.showErrorMessage('Login failed: ' + result.error);
+      }
+    }
+  }
+
   resetModalState() {
     this.isEditMode = false;
     this.currentProject = null;
@@ -1247,6 +1616,12 @@ class UIController {
 
   async handleImport(files) {
     console.log('Starting import process with', files.length, 'files');
+    
+    // Check authentication
+    if (!authManager.isAuthenticated()) {
+      this.showErrorMessage('You must be logged in to import projects');
+      return;
+    }
     
     if (files.length === 0) {
       this.showErrorMessage('No files selected for import.');
