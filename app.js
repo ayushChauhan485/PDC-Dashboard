@@ -10,26 +10,12 @@ function initializeFirebase() {
       return false;
     }
     
-    // Use config from window (loaded via firebase-config.js) or fallback to inline config
+    // Use config from window (loaded via firebase-config.js)
     let config = window.firebaseConfig;
     
-    // Fallback config for deployed environments (firebase-config.js is gitignored)
     if (!config) {
-      console.warn('External config not found, using embedded config');
-      config = {
-        apiKey: "AIzaSyBdCWa0JAMdCg5XB_iRBxhphQoAdbj7E4s",
-        authDomain: "pdc-dashboard-8963a.firebaseapp.com",
-        databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "pdc-dashboard-8963a",
-        storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
-        messagingSenderId: "340274488388",
-        appId: "1:340274488388:web:ca56cabacd68e0521d0811"
-      };
-      
-      // Also set admin emails fallback
-      if (!window.adminEmails) {
-        window.adminEmails = ['admin@example.com'];
-      }
+      console.error('Firebase configuration not loaded. Make sure firebase-config.js is included.');
+      return false;
     }
     
     firebase.initializeApp(config);

@@ -304,7 +304,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
     <!-- Firebase Configuration -->
-    <script src="firebase-config.js"></script>
+    <!-- For local development: Use firebase-config.js (gitignored) -->
+    <!-- For production: Use firebase-config.public.js (committed, update before deploy) -->
+    <script src="firebase-config.js" onerror="this.onerror=null; this.remove(); var script = document.createElement('script'); script.src='firebase-config.public.js'; document.head.appendChild(script);"></script>
 
     <!-- Diagnostic Script -->
     <script>
@@ -318,7 +320,7 @@
     </script>
 
     <!-- Application Script with cache busting -->
-    <script src="app.js?v=20250925-12"></script>
+    <script src="app.js?v=20250925-13"></script>
 </body>
 
 </html>
