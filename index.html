@@ -306,8 +306,19 @@
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
 
+    <!-- Diagnostic Script -->
+    <script>
+        console.log('=== Firebase Diagnostic ===');
+        console.log('1. Firebase loaded:', typeof firebase !== 'undefined');
+        console.log('2. Firebase config loaded:', typeof window.firebaseConfig !== 'undefined');
+        if (typeof window.firebaseConfig !== 'undefined') {
+            console.log('3. Config project ID:', window.firebaseConfig.projectId);
+        }
+        console.log('========================');
+    </script>
+
     <!-- Application Script with cache busting -->
-    <script src="app.js?v=20250925-10"></script>
+    <script src="app.js?v=20250925-12"></script>
 </body>
 
 </html>
