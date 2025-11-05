@@ -303,10 +303,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Firebase Configuration - Embedded for simplicity -->
+    <!-- Firebase Configuration (embedded for deployment) -->
     <script>
         // Firebase configuration
-        const firebaseConfig = {
+        window.firebaseConfig = {
             apiKey: "AIzaSyBdCWa0JAMdCg5XB_iRBxhphQoAdbj7E4s",
             authDomain: "pdc-dashboard-8963a.firebaseapp.com",
             databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -316,18 +316,14 @@
             appId: "1:340274488388:web:ca56cabacd68e0521d0811"
         };
 
-        // Admin emails (users who can delete any comment)
-        const adminEmails = ['admin@example.com'];
-
-        // Make available globally
-        window.firebaseConfig = firebaseConfig;
-        window.adminEmails = adminEmails;
+        // Admin emails
+        window.adminEmails = ['admin@example.com', 'ayushchauhan485@gmail.com'];
         
-        console.log('✅ Firebase configuration loaded');
+        console.log('✅ Firebase config loaded');
     </script>
 
     <!-- Application Script with cache busting -->
-    <script src="app.js?v=20250925-14"></script>
+    <script src="app.js?v=20250925-13"></script>
 </body>
 
 </html>
