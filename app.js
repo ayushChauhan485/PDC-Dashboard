@@ -6,19 +6,16 @@ let isFirebaseInitialized = false;
 function initializeFirebase() {
   try {
     if (typeof firebase === 'undefined') {
-      console.error('Firebase not loaded');
+      console.error('❌ Firebase SDK not loaded');
       return false;
     }
     
-    // Use config from window (loaded via firebase-config.js)
-    let config = window.firebaseConfig;
-    
-    if (!config) {
-      console.error('Firebase configuration not loaded. Make sure firebase-config.js is included.');
+    if (!window.firebaseConfig) {
+      console.error('❌ Firebase configuration not found');
       return false;
     }
     
-    firebase.initializeApp(config);
+    firebase.initializeApp(window.firebaseConfig);
     database = firebase.database();
     auth = firebase.auth();
     isFirebaseInitialized = true;

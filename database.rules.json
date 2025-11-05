@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "projects": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

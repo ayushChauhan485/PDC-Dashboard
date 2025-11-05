@@ -303,24 +303,31 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Firebase Configuration -->
-    <!-- For local development: Use firebase-config.js (gitignored) -->
-    <!-- For production: Use firebase-config.public.js (committed, update before deploy) -->
-    <script src="firebase-config.js" onerror="this.onerror=null; this.remove(); var script = document.createElement('script'); script.src='firebase-config.public.js'; document.head.appendChild(script);"></script>
-
-    <!-- Diagnostic Script -->
+    <!-- Firebase Configuration - Embedded for simplicity -->
     <script>
-        console.log('=== Firebase Diagnostic ===');
-        console.log('1. Firebase loaded:', typeof firebase !== 'undefined');
-        console.log('2. Firebase config loaded:', typeof window.firebaseConfig !== 'undefined');
-        if (typeof window.firebaseConfig !== 'undefined') {
-            console.log('3. Config project ID:', window.firebaseConfig.projectId);
-        }
-        console.log('========================');
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdCWa0JAMdCg5XB_iRBxhphQoAdbj7E4s",
+            authDomain: "pdc-dashboard-8963a.firebaseapp.com",
+            databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pdc-dashboard-8963a",
+            storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
+            messagingSenderId: "340274488388",
+            appId: "1:340274488388:web:ca56cabacd68e0521d0811"
+        };
+
+        // Admin emails (users who can delete any comment)
+        const adminEmails = ['admin@example.com'];
+
+        // Make available globally
+        window.firebaseConfig = firebaseConfig;
+        window.adminEmails = adminEmails;
+        
+        console.log('✅ Firebase configuration loaded');
     </script>
 
     <!-- Application Script with cache busting -->
-    <script src="app.js?v=20250925-13"></script>
+    <script src="app.js?v=20250925-14"></script>
 </body>
 
 </html>
