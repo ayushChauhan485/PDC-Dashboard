@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Sample Data</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <h1>Add Sample Data to Firebase</h1>
+    <button onclick="addSampleData()">Add Sample Projects</button>
+    <div id="status"></div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdCWa0JAMdCg5XB_iRBxhphQoAdbj7E4s",
+            authDomain: "pdc-dashboard-8963a.firebaseapp.com",
+            databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pdc-dashboard-8963a",
+            storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
+            messagingSenderId: "340274488388",
+            appId: "1:340274488388:web:ca56cabacd68e0521d0811"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        const sampleProjects = [
+            {
+                title: "E-Commerce Platform Development",
+                description: "Building a modern e-commerce platform with React, Node.js, and MongoDB. Features include user authentication, product catalog, shopping cart, and payment integration.",
+                mentor: "Dr. Sarah Johnson",
+                assignees: ["Alice Smith", "Bob Wilson", "Carol Brown"],
+                status: "In Progress",
+                progress: 65,
+                startDate: "2025-01-15",
+                dueDate: "2025-04-30",
+                resources: [
+                    "https://github.com/team/ecommerce-project",
+                    "https://docs.mongodb.com/",
+                    "https://reactjs.org/docs/"
+                ],
+                comments: []
+            },
+            {
+                title: "Machine Learning Chatbot",
+                description: "Developing an AI-powered customer service chatbot using Python, TensorFlow, and natural language processing techniques.",
+                mentor: "Prof. Michael Chen",
+                assignees: ["David Lee", "Emma Davis"],
+                status: "Planning",
+                progress: 20,
+                startDate: "2025-02-01",
+                dueDate: "2025-06-15",
+                resources: [
+                    "https://tensorflow.org/tutorials",
+                    "https://huggingface.co/transformers/",
+                    "https://spacy.io/usage/spacy-101"
+                ],
+                comments: []
+            },
+            {
+                title: "Mobile Fitness App",
+                description: "Cross-platform mobile application for fitness tracking with React Native, including workout plans, progress tracking, and social features.",
+                mentor: "Dr. Lisa Rodriguez",
+                assignees: ["Frank Miller", "Grace Taylor", "Henry Clark"],
+                status: "Review",
+                progress: 85,
+                startDate: "2024-11-01",
+                dueDate: "2025-03-15",
+                resources: [
+                    "https://reactnative.dev/docs/getting-started",
+                    "https://expo.dev/",
+                    "https://firebase.google.com/docs/auth"
+                ],
+                comments: []
+            }
+        ];
+
+        async function addSampleData() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Signing in anonymously...';
+
+            try {
+                // Sign in anonymously to get write permission
+                await auth.signInAnonymously();
+                status.innerHTML = 'Signed in! Adding projects...<br>';
+
+                const projectsRef = database.ref('projects');
+                
+                for (const project of sampleProjects) {
+                    const newProjectRef = projectsRef.push();
+                    await newProjectRef.set(project);
+                    status.innerHTML += `✅ Added: ${project.title}<br>`;
+                }
+
+                status.innerHTML += '<br><strong style="color: green;">✅ All sample data added successfully!</strong><br>';
+                status.innerHTML += '<a href="index.html">Go to Dashboard</a>';
+            } catch (error) {
+                status.innerHTML = `❌ Error: ${error.message}`;
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

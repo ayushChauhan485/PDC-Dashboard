@@ -303,11 +303,27 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <!-- Firebase Configuration -->
-    <script src="firebase-config.js"></script>
+    <!-- Firebase Configuration (embedded for deployment) -->
+    <script>
+        // Firebase configuration
+        window.firebaseConfig = {
+            apiKey: "AIzaSyBdCWa0JAMdCg5XB_iRBxhphQoAdbj7E4s",
+            authDomain: "pdc-dashboard-8963a.firebaseapp.com",
+            databaseURL: "https://pdc-dashboard-8963a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pdc-dashboard-8963a",
+            storageBucket: "pdc-dashboard-8963a.firebasestorage.app",
+            messagingSenderId: "340274488388",
+            appId: "1:340274488388:web:ca56cabacd68e0521d0811"
+        };
+
+        // Admin emails
+        window.adminEmails = ['admin@example.com', 'ayushchauhan485@gmail.com'];
+        
+        console.log('✅ Firebase config loaded');
+    </script>
 
     <!-- Application Script with cache busting -->
-    <script src="app.js?v=20250925-10"></script>
+    <script src="app.js?v=20250925-13"></script>
 </body>
 
 </html>
